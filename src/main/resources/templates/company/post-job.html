@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${job == null || job.id == null ? 'Post New Job' : 'Edit Job'}">Post New Job</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Select2 for searchable multi-select -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <!-- Flatpickr for Date & Time Selection -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+
+    <style>
+        /* Modern Select2 Styling to match premium theme */
+        .select2-container--default .select2-selection--multiple,
+        .select2-container--default .select2-selection--single {
+            border: 1px solid rgba(0,0,0,0.1) !important;
+            border-radius: 12px !important;
+            padding: 5px 8px !important;
+            min-height: 48px !important;
+            background: rgba(255, 255, 255, 0.8) !important;
+            backdrop-filter: blur(10px) !important;
+            transition: all 0.3s ease !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--multiple,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #F59E0B !important;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1) !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: rgba(245, 158, 11, 0.1) !important;
+            border: 1px solid rgba(245, 158, 11, 0.2) !important;
+            color: #F59E0B !important;
+            border-radius: 8px !important;
+            padding: 4px 8px !important;
+            margin-top: 4px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: #F59E0B !important;
+            margin-right: 5px !important;
+            border-right: 1px solid rgba(245, 158, 11, 0.2) !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px !important;
+            color: #4B5563 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 46px !important;
+        }
+        
+        .form-section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(245, 158, 11, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .lpa-input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .lpa-input-group input {
+            padding-right: 60px;
+        }
+        .lpa-suffix {
+            position: absolute;
+            right: 15px;
+            color: #6B7280;
+            font-weight: 500;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="company-post-job">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+                <div class="dashboard-container container-fluid py-4" style="max-width: 1200px;">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="fw-bold mb-1" th:text="${job == null || job.id == null ? 'Post New Job' : 'Edit Job'}">Post New Job</h2>
+                            <p class="text-muted mb-0">Fill in the structured details to maximize AI candidate matching.</p>
+                        </div>
+                        <a th:href="@{/company/jobs}" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="fa-solid fa-xmark me-2"></i> Cancel
+                        </a>
+                    </div>
+                    
+                    <div class="corporate-card p-4 p-md-5">
+                        <form th:action="${job == null || job.id == null ? '/company/post-job' : '/company/job/' + job.id + '/edit'}" method="POST" id="jobForm">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            
+                            <!-- 1. Basic Info -->
+                            <h4 class="form-section-title"><i class="fa-solid fa-briefcase text-accent"></i> Basic Information</h4>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-12">
+                                    <label class="form-label text-muted fw-medium">Job Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control glass-input-premium" name="jobTitle" th:value="${job.jobTitle}" required placeholder="e.g. Senior Backend Engineer">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Department <span class="text-danger">*</span></label>
+                                    <select class="form-select select2-single" name="department" required>
+                                        <option value="" disabled selected>Select Department</option>
+                                        <option th:selected="${job.department == 'Software Development'}" value="Software Development">Software Development</option>
+                                        <option th:selected="${job.department == 'Web Development'}" value="Web Development">Web Development</option>
+                                        <option th:selected="${job.department == 'Mobile Development'}" value="Mobile Development">Mobile Development</option>
+                                        <option th:selected="${job.department == 'Data Science'}" value="Data Science">Data Science</option>
+                                        <option th:selected="${job.department == 'AI / Machine Learning'}" value="AI / Machine Learning">AI / Machine Learning</option>
+                                        <option th:selected="${job.department == 'Cyber Security'}" value="Cyber Security">Cyber Security</option>
+                                        <option th:selected="${job.department == 'Cloud Computing'}" value="Cloud Computing">Cloud Computing</option>
+                                        <option th:selected="${job.department == 'DevOps'}" value="DevOps">DevOps</option>
+                                        <option th:selected="${job.department == 'Testing / QA'}" value="Testing / QA">Testing / QA</option>
+                                        <option th:selected="${job.department == 'UI / UX'}" value="UI / UX">UI / UX</option>
+                                        <option th:selected="${job.department == 'Networking'}" value="Networking">Networking</option>
+                                        <option th:selected="${job.department == 'Database'}" value="Database">Database</option>
+                                        <option th:selected="${job.department == 'Technical Support'}" value="Technical Support">Technical Support</option>
+                                        <option th:selected="${job.department == 'HR'}" value="HR">HR</option>
+                                        <option th:selected="${job.department == 'Finance'}" value="Finance">Finance</option>
+                                        <option th:selected="${job.department == 'Marketing'}" value="Marketing">Marketing</option>
+                                        <option th:selected="${job.department == 'Sales'}" value="Sales">Sales</option>
+                                        <option th:selected="${job.department == 'Other'}" value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Employment Type <span class="text-danger">*</span></label>
+                                    <select class="form-select select2-single" name="employmentType" required>
+                                        <option value="" disabled selected>Select Type</option>
+                                        <option th:selected="${job.employmentType == 'Full Time'}" value="Full Time">Full Time</option>
+                                        <option th:selected="${job.employmentType == 'Part Time'}" value="Part Time">Part Time</option>
+                                        <option th:selected="${job.employmentType == 'Internship'}" value="Internship">Internship</option>
+                                        <option th:selected="${job.employmentType == 'Contract'}" value="Contract">Contract</option>
+                                        <option th:selected="${job.employmentType == 'Remote'}" value="Remote">Remote</option>
+                                        <option th:selected="${job.employmentType == 'Hybrid'}" value="Hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Work Mode <span class="text-danger">*</span></label>
+                                    <select class="form-select select2-single" name="workMode" required>
+                                        <option value="" disabled selected>Select Mode</option>
+                                        <option th:selected="${job.workMode == 'On-site'}" value="On-site">On-site</option>
+                                        <option th:selected="${job.workMode == 'Hybrid'}" value="Hybrid">Hybrid</option>
+                                        <option th:selected="${job.workMode == 'Remote'}" value="Remote">Remote</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Location <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control glass-input-premium" name="location" list="locationOptions" th:value="${job.location}" required placeholder="e.g. Bangalore">
+                                    <datalist id="locationOptions">
+                                        <option value="Bangalore">
+                                        <option value="Chennai">
+                                        <option value="Hyderabad">
+                                        <option value="Delhi">
+                                        <option value="Mumbai">
+                                        <option value="Pune">
+                                        <option value="Coimbatore">
+                                        <option value="Noida">
+                                        <option value="Kochi">
+                                        <option value="Trivandrum">
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Salary (LPA) <span class="text-danger">*</span></label>
+                                    <div class="lpa-input-group">
+                                        <input type="number" class="form-control glass-input-premium" name="salaryLpa" th:value="${job.salaryLpa}" min="1" max="100" required placeholder="e.g. 12">
+                                        <span class="lpa-suffix">LPA</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Number of Vacancies</label>
+                                    <input type="number" class="form-control glass-input-premium" name="vacancies" th:value="${job.vacancies}" min="1" placeholder="e.g. 5">
+                                </div>
+                            </div>
+
+                            <!-- 2. Requirements -->
+                            <h4 class="form-section-title"><i class="fa-solid fa-graduation-cap text-accent"></i> Requirements</h4>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-4">
+                                    <label class="form-label text-muted fw-medium">Experience <span class="text-danger">*</span></label>
+                                    <select class="form-select select2-single" name="experienceRequirement" required>
+                                        <option value="" disabled selected>Select Experience</option>
+                                        <option th:selected="${job.experienceRequirement == 'Fresher (0 Years)'}" value="Fresher (0 Years)">Fresher (0 Years)</option>
+                                        <option th:selected="${job.experienceRequirement == '1+ Years'}" value="1+ Years">1+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '2+ Years'}" value="2+ Years">2+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '3+ Years'}" value="3+ Years">3+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '4+ Years'}" value="4+ Years">4+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '5+ Years'}" value="5+ Years">5+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '6+ Years'}" value="6+ Years">6+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '7+ Years'}" value="7+ Years">7+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '8+ Years'}" value="8+ Years">8+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '9+ Years'}" value="9+ Years">9+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '10+ Years'}" value="10+ Years">10+ Years</option>
+                                        <option th:selected="${job.experienceRequirement == '10+ Years (Senior)'}" value="10+ Years (Senior)">10+ Years (Senior)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-muted fw-medium">Min. Qualification <span class="text-danger">*</span></label>
+                                    <select class="form-select select2-multiple" name="minimumQualificationArr" multiple="multiple" required id="minimumQualificationSelect">
+                                        <!-- Options populated via JS -->
+                                    </select>
+                                    <input type="hidden" name="minimumQualification" id="minimumQualificationHidden" th:value="${job.minimumQualification}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label text-muted fw-medium">Min. CGPA <span class="text-danger">*</span></label>
+                                    <select class="form-select select2-single" name="minimumCgpa" required>
+                                        <option value="" disabled selected>Select CGPA</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 0.0}" value="0.0">No Minimum</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 6.0}" value="6.0">6.0</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 6.5}" value="6.5">6.5</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 7.0}" value="7.0">7.0</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 7.5}" value="7.5">7.5</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 8.0}" value="8.0">8.0</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 8.5}" value="8.5">8.5</option>
+                                        <option th:selected="${job.minimumCgpa != null and job.minimumCgpa == 9.0}" value="9.0">9.0</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Required Skills <span class="text-danger">*</span></label>
+                                    <select class="form-select select2-multiple" name="requiredSkillsArr" multiple="multiple" required id="requiredSkillsSelect">
+                                        <!-- Options populated via JS -->
+                                    </select>
+                                    <input type="hidden" name="requiredSkills" id="requiredSkillsHidden" th:value="${job.requiredSkills}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Preferred Skills</label>
+                                    <select class="form-select select2-multiple" name="preferredSkillsArr" multiple="multiple" id="preferredSkillsSelect">
+                                        <!-- Options populated via JS -->
+                                    </select>
+                                    <input type="hidden" name="preferredSkills" id="preferredSkillsHidden" th:value="${job.preferredSkills}">
+                                </div>
+                            </div>
+
+                            <!-- 3. Descriptions -->
+                            <h4 class="form-section-title"><i class="fa-solid fa-align-left text-accent"></i> Role Details</h4>
+                            <div class="row g-4 mb-5">
+                                <div class="col-md-12">
+                                    <label class="form-label text-muted fw-medium">Job Description <span class="text-danger">*</span></label>
+                                    <textarea class="form-control glass-input-premium" name="jobDescription" rows="5" required placeholder="Provide a detailed overview of the role..." th:text="${job.jobDescription}"></textarea>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label text-muted fw-medium">Responsibilities</label>
+                                    <textarea class="form-control glass-input-premium" name="responsibilities" rows="5" placeholder="List the daily responsibilities..." th:text="${job.responsibilities}"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-medium">Application Deadline</label>
+                                    <input type="text" id="deadlinePicker" class="form-control glass-input-premium bg-white" name="lastDateToApply" th:value="${job.lastDateToApply}" placeholder="Select Date and Time">
+                                </div>
+                            </div>
+                            
+                            <hr class="border-secondary my-4">
+                            
+                            <div class="d-flex justify-content-end gap-3 mt-4">
+                                <a th:href="@{/company/jobs}" class="btn btn-outline-secondary rounded-pill px-5" style="height: 48px; display: flex; align-items: center; font-weight: 600;">Cancel</a>
+                                <button type="submit" class="btn-premium rounded-pill px-5 border-0" style="height: 48px; background: #F59E0B; color: #FFF; font-weight: 600;">
+                                    <i th:class="${job == null || job.id == null ? 'fa-solid fa-paper-plane me-2' : 'fa-solid fa-floppy-disk me-2'}"></i>
+                                    <span th:text="${job == null || job.id == null ? 'Post Job' : 'Save Changes'}">Post Job</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <script>
+        $(document).ready(function() {
+            const skillOptions = [
+                "Java", "Spring Boot", "Hibernate", "Python", "Django", "Flask", "C", "C++", 
+                "JavaScript", "TypeScript", "React", "Angular", "Vue", "HTML", "CSS", "Bootstrap", 
+                "Tailwind", "Node.js", "PHP", "Laravel", "MySQL", "PostgreSQL", "MongoDB", "Oracle", 
+                "AWS", "Azure", "Docker", "Kubernetes", "Git", "GitHub", "Linux", "Android", "Kotlin", 
+                "Flutter", "React Native", "Machine Learning", "Deep Learning", "TensorFlow", "PyTorch", 
+                "Data Structures", "Algorithms", "REST API", "Microservices", "Cyber Security", 
+                "Networking", "Artificial Intelligence"
+            ];
+            
+            const qualificationOptions = [
+                "10th Pass", "12th Pass", "Diploma", "ITI", "BCA", 
+                "B.Sc Computer Science", "B.Sc Information Technology", "B.Sc Mathematics", 
+                "B.Sc Physics", "B.Sc Statistics", "B.Tech Computer Science", 
+                "B.Tech Information Technology", "B.Tech Electronics", "B.Tech Mechanical", 
+                "B.Tech Civil", "B.Tech Electrical", "BE Computer Science", 
+                "BE Information Technology", "MCA", "M.Sc Computer Science", 
+                "MBA", "M.Tech", "PhD", "Any Graduate", "Any Post Graduate"
+            ];
+            
+            function populateSelect(selectId, hiddenId, optionsArray, placeholderText) {
+                const select = $(`#${selectId}`);
+                const hiddenVal = $(`#${hiddenId}`).val();
+                let selectedArr = [];
+                if(hiddenVal) {
+                    selectedArr = hiddenVal.split(',').map(s => s.trim());
+                }
+                
+                optionsArray.forEach(item => {
+                    const isSelected = selectedArr.includes(item) ? 'selected' : '';
+                    select.append(`<option value="${item}" ${isSelected}>${item}</option>`);
+                });
+                
+                // Add selected items that might not be in the default list
+                selectedArr.forEach(item => {
+                    if(item && !optionsArray.includes(item)) {
+                        select.append(`<option value="${item}" selected>${item}</option>`);
+                    }
+                });
+                
+                select.select2({
+                    tags: true,
+                    placeholder: placeholderText,
+                    tokenSeparators: [',']
+                });
+            }
+            
+            populateSelect('minimumQualificationSelect', 'minimumQualificationHidden', qualificationOptions, "Search qualifications...");
+            populateSelect('requiredSkillsSelect', 'requiredSkillsHidden', skillOptions, "Search or add skills...");
+            populateSelect('preferredSkillsSelect', 'preferredSkillsHidden', skillOptions, "Search or add skills...");
+            
+            $('.select2-single').select2({
+                minimumResultsForSearch: 10
+            });
+            
+            // On form submit, map select2 arrays to hidden CSV fields
+            $('#jobForm').on('submit', function() {
+                $('#minimumQualificationHidden').val($('#minimumQualificationSelect').val() ? $('#minimumQualificationSelect').val().join(', ') : '');
+                $('#requiredSkillsHidden').val($('#requiredSkillsSelect').val() ? $('#requiredSkillsSelect').val().join(', ') : '');
+                $('#preferredSkillsHidden').val($('#preferredSkillsSelect').val() ? $('#preferredSkillsSelect').val().join(', ') : '');
+            });
+            
+            // Initialize Flatpickr for Application Deadline
+            flatpickr("#deadlinePicker", {
+                enableTime: true,
+                dateFormat: "Y-m-d\\TH:i", // Use T to match ISO format required by Spring Boot LocalDateTime
+                altInput: true,
+                altFormat: "d/m/Y h:i K",
+                time_24hr: false,
+                defaultHour: 23,
+                defaultMinute: 59,
+                minDate: "today", // Disable past dates
+                onChange: function(selectedDates, dateStr, instance) {
+                    // This handles keeping the time at default when only date is changed
+                    // Flatpickr handles this mostly natively when defaultHour is set.
+                }
+            });
+        });
+    </script>
+</body>
+</html>

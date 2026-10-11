@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Profile - Skill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/app-dialog.js"></script>
+    <script src="/js/loader.js"></script>
+    <style>
+        /* New button styles for profile picture */
+        .btn-upload-profile, .btn-remove-profile {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 46px;
+            padding: 0 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: all 0.25s ease;
+            background: #ffffff;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        
+        .btn-upload-profile {
+            color: #1E293B;
+            border: 1px solid #F59E0B;
+        }
+        .btn-upload-profile i {
+            color: #F59E0B;
+            transition: color 0.25s ease;
+        }
+        .btn-upload-profile:hover {
+            background: #F59E0B;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(245, 158, 11, 0.2);
+        }
+        .btn-upload-profile:hover i {
+            color: #ffffff;
+        }
+        .btn-upload-profile:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        .btn-remove-profile {
+            color: #1E293B;
+            border: 1px solid #EF4444;
+        }
+        .btn-remove-profile i {
+            color: #EF4444;
+            transition: color 0.25s ease;
+        }
+        .btn-remove-profile:hover {
+            background: #EF4444;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(239, 68, 68, 0.2);
+        }
+        .btn-remove-profile:hover i {
+            color: #ffffff;
+        }
+        .btn-remove-profile:active {
+            transform: translateY(0) scale(0.98);
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="faculty-profile">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+        
+                <div class="dashboard-container container py-4" >
+                    <div class="row justify-content-center">
+                        <div class="col-md-8 col-lg-6" >
+                            <div class="corporate-card">
+                                <h3 class="fw-light mb-4 text-center">My <span class="fw-bold">Profile</span></h3>
+
+                                <div th:if="${success}" class="alert alert-success border-success text-success text-center" th:text="${success}"></div>
+
+                        <div class="mb-4 text-center pb-3 border-bottom">
+                            <div class="profile-picture-container position-relative mx-auto mb-3" style="width: 140px; height: 140px; border-radius: 50%; border: 3px solid #F59E0B; background-color: #F9FAFB; display: flex; align-items: center; justify-content: center; overflow: hidden;" id="dropZone">
+                                <img th:if="${faculty.profilePicture != null}" th:src="${faculty.profilePicture}" id="profileImgPreview" style="width: 100%; height: 100%; object-fit: cover;" alt="Profile Picture">
+                                <span th:if="${faculty.profilePicture == null}" id="profileImgInitial" style="font-size: 3rem; font-weight: bold; color: #F59E0B;" th:text="${#strings.substring(faculty.name, 0, 1)}">U</span>
+                                
+                                <div class="drag-overlay position-absolute w-100 h-100 d-none align-items-center justify-content-center" style="background: rgba(245,158,11,0.8); top: 0; left: 0; z-index: 10;">
+                                    <i class="fa-solid fa-cloud-arrow-up text-white fs-2"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-center gap-3" style="margin-top: 20px; margin-bottom: 8px;">
+                                <label class="btn-upload-profile" for="profileUploadInput">
+                                    <i class="fa-solid fa-camera me-2"></i> <span id="uploadBtnText" th:text="${faculty.profilePicture == null ? 'Upload Image' : 'Change Image'}">Upload Image</span>
+                                    <input type="file" id="profileUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg, image/webp">
+                                </label>
+                                <button type="button" class="btn-remove-profile" id="btnRemovePicture" th:classappend="${faculty.profilePicture == null} ? 'd-none' : ''">
+                                    <i class="fa-solid fa-trash me-2"></i> Remove Image
+                                </button>
+                            </div>
+                            <div class="text-muted small" style="color: #6B7280 !important;">Max size: 5MB &bull; JPG &bull; PNG &bull; WEBP &bull; Auto-crops to square</div>
+                            <div id="uploadStatus" class="small mt-2 fw-medium"></div>
+                        </div>
+
+                                <form th:action="@{/faculty/profile}" method="POST">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Full Name</label>
+                                        <input type="text" class="form-control glass-input-premium" name="name" th:value="${faculty.name}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Email (Read-only)</label>
+                                        <input type="email" class="form-control glass-input-premium" th:value="${faculty.email}" readonly>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Phone Number</label>
+                                        <input type="text" class="form-control glass-input-premium" name="phoneNumber" th:value="${faculty.phoneNumber}">
+                                    </div>
+                                    
+                                    <hr class="border-secondary my-4">
+                                    <h5 class="text-accent mb-3">Change Password</h5>
+                                    <p class="text-muted small mb-3">Leave blank if you do not wish to change your password.</p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">New Password</label>
+                                        <input type="password" class="form-control glass-input-premium" name="newPassword">
+                                    </div>
+
+                                    <button type="submit" class="btn-premium w-100 mt-4 border-0" style="background: var(--text-color); color: var(--bg-color);">Update Profile</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        const uploadInput = document.getElementById('profileUploadInput');
+        const removeBtn = document.getElementById('btnRemovePicture');
+        const dropZone = document.getElementById('dropZone');
+        const dragOverlay = dropZone.querySelector('.drag-overlay');
+        const statusDiv = document.getElementById('uploadStatus');
+        
+        const roleBaseUrl = '/faculty';
+        
+        const headerContainer = document.querySelector('.header-avatar-container');
+        
+        function updateDOM(imgData) {
+            let previewImg = document.getElementById('profileImgPreview');
+            if (!previewImg && imgData) {
+                previewImg = document.createElement('img');
+                previewImg.id = 'profileImgPreview';
+                previewImg.style = 'width: 100%; height: 100%; object-fit: cover;';
+                dropZone.appendChild(previewImg);
+                const initial = document.getElementById('profileImgInitial');
+                if(initial) initial.remove();
+            }
+            
+            if (imgData) {
+                previewImg.src = imgData;
+                removeBtn.classList.remove('d-none');
+                
+                const headerImg = document.querySelector('.header-avatar-img');
+                const headerInitial = document.querySelector('.header-avatar-initial');
+                if(headerImg) {
+                    headerImg.src = imgData;
+                } else if(headerContainer) {
+                    const newHeaderImg = document.createElement('img');
+                    newHeaderImg.src = imgData;
+                    newHeaderImg.className = 'header-avatar-img';
+                    newHeaderImg.style = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;';
+                    headerContainer.appendChild(newHeaderImg);
+                    if(headerInitial) headerInitial.style.display = 'none';
+                }
+                
+                const btnText = document.getElementById('uploadBtnText');
+                if(btnText) btnText.textContent = 'Change Image';
+                
+            } else {
+                if(previewImg) previewImg.remove();
+                
+                const initial = document.createElement('span');
+                initial.id = 'profileImgInitial';
+                initial.style = 'font-size: 3rem; font-weight: bold; color: #F59E0B;';
+                initial.textContent = /*[[${#strings.substring(faculty.name, 0, 1)}]]*/ 'U';
+                dropZone.appendChild(initial);
+                
+                removeBtn.classList.add('d-none');
+                
+                const hImg = document.querySelector('.header-avatar-img');
+                const hInitial = document.querySelector('.header-avatar-initial');
+                if(hImg) hImg.remove();
+                if(hInitial) hInitial.style.display = 'block';
+                
+                const btnText = document.getElementById('uploadBtnText');
+                if(btnText) btnText.textContent = 'Upload Image';
+            }
+        }
+        
+        function handleFile(file) {
+            if(!file) return;
+            if(file.size > 5 * 1024 * 1024) {
+                statusDiv.innerHTML = '<span class="text-danger">File too large. Max 5MB.</span>';
+                return;
+            }
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if(!validTypes.includes(file.type)) {
+                statusDiv.innerHTML = '<span class="text-danger">Invalid format. Only JPG, PNG, WEBP allowed.</span>';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<span class="text-info">Uploading image...</span>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+
+            fetch(roleBaseUrl + '/profile/picture', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                },
+                body: formData
+            })
+                        .then(async res => {
+                let data = {};
+                try { data = await res.json(); } catch(e) {}
+                if(res.ok && data.success) {
+                    statusDiv.innerHTML = '<span class="text-success"><i class="fa-solid fa-check"></i> Profile picture updated successfully.</span>';
+                    updateDOM(data.imageUrl);
+                    setTimeout(() => statusDiv.innerHTML = '', 3000);
+                } else {
+                    statusDiv.innerHTML = '<span class="text-danger">' + (data.error || 'Upload failed.') + '</span>';
+                }
+            })
+            .catch(err => {
+                statusDiv.innerHTML = '<span class="text-danger">Error uploading image: ' + err.message + '</span>';
+            });
+        }
+
+        uploadInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        removeBtn.addEventListener('click', async () => {
+            const confirmed = await AppDialog.confirm({
+                title: 'Remove Profile Picture?',
+                message: 'Are you sure you want to remove your faculty profile picture?',
+                details: 'Your avatar will reset to default initials.',
+                confirmText: 'Remove Picture',
+                cancelText: 'Cancel',
+                type: 'danger',
+                icon: 'chalkboard-user'
+            });
+            if (!confirmed) return;
+            
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+            fetch(roleBaseUrl + '/profile/picture/remove', { 
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(res => {
+                if(res.ok) {
+                    if (window.AppToast) {
+                        AppToast.success('Profile picture removed successfully.');
+                    }
+                    statusDiv.innerHTML = '<span class="text-success">Picture removed successfully.</span>';
+                    updateDOM(null);
+                    setTimeout(() => statusDiv.innerHTML = '', 3000);
+                } else {
+                    if (window.AppToast) {
+                        AppToast.error('Failed to remove profile picture.');
+                    }
+                }
+            })
+            .catch(err => {
+                if (window.AppToast) {
+                    AppToast.error('Error removing image: ' + err.message);
+                }
+            });
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragOverlay.classList.remove('d-none');
+            dragOverlay.classList.add('d-flex');
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragOverlay.classList.add('d-none');
+            dragOverlay.classList.remove('d-flex');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragOverlay.classList.add('d-none');
+            dragOverlay.classList.remove('d-flex');
+            if(e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+    </script>
+</body>
+</html>

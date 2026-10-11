@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Details - Faculty</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <style>
+        .company-logo-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            object-fit: cover;
+            background: white;
+            padding: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #F3F4F6;
+        }
+        .detail-corporate-card {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.25s ease;
+        }
+        .detail-corporate-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+            border-color: #D1D5DB;
+        }
+        .detail-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-right: 16px;
+        }
+    </style>
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+</head>
+<body data-theme="light" data-page-id="faculty-companies">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+                <div class="container py-4">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10">
+                            
+                            <!-- Header actions -->
+                            <div class="mb-4 d-flex justify-content-between align-items-center">
+                                <a th:href="@{/faculty/company/{id}(id=${job.company.id})}" class="text-muted text-decoration-none fw-medium hover-orange">
+                                    <i class="fa-solid fa-arrow-left me-2"></i> Back to Company
+                                </a>
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-medium fs-6" th:if="${job.isActive}">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Active Job
+                                </span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill fw-medium fs-6" th:unless="${job.isActive}">
+                                    <i class="fa-solid fa-circle-xmark me-1"></i> Closed
+                                </span>
+                            </div>
+
+                            <div class="corporate-card p-4 p-md-5 mb-4">
+                                <div class="d-flex flex-column flex-md-row align-items-md-center mb-5 pb-4 border-bottom gap-4">
+                                    <div th:if="${job.company.profilePicture != null}">
+                                        <img th:src="${job.company.profilePicture}" class="company-logo-large">
+                                    </div>
+                                    <div th:unless="${job.company.profilePicture != null}" class="company-logo-large d-flex justify-content-center align-items-center bg-light text-muted" style="font-size: 2rem;">
+                                        <i class="fa-solid fa-building"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="fw-bold mb-2 text-dark" th:text="${job.jobTitle}"></h2>
+                                        <h5 class="text-muted mb-3"><i class="fa-solid fa-building me-2"></i><span th:text="${job.company.companyName}"></span></h5>
+                                        <div class="text-muted small d-flex flex-wrap gap-3">
+                                            <span class="d-inline-flex align-items-center px-3 py-2 bg-light rounded-3 text-dark fw-medium border">
+                                                <i class="fa-solid fa-location-dot text-muted me-2"></i> <span th:text="${job.location}"></span>
+                                            </span>
+                                            <span class="d-inline-flex align-items-center px-3 py-2 bg-light rounded-3 text-dark fw-medium border">
+                                                <i class="fa-solid fa-clock text-muted me-2"></i> Posted <span th:text="${#temporals.format(job.createdAt, 'dd MMM yyyy')}"></span>
+                                            </span>
+                                            <span class="d-inline-flex align-items-center px-3 py-2 bg-light rounded-3 text-dark fw-medium border" th:if="${job.lastDateToApply != null}">
+                                                <i class="fa-solid fa-calendar-xmark text-warning me-2"></i> Apply by <span th:text="${#temporals.format(job.lastDateToApply, 'dd MMM yyyy')}"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row g-4 mb-5">
+                                    <div class="col-md-6">
+                                        <div class="detail-corporate-card d-flex align-items-center h-100 mb-0">
+                                            <div class="detail-icon bg-success bg-opacity-10 text-success"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                                            <div>
+                                                <div class="small text-muted text-uppercase fw-semibold mb-1">Salary Package</div>
+                                                <div class="fw-bold fs-5 text-dark" th:text="${job.packageOffered}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="detail-corporate-card d-flex align-items-center h-100 mb-0">
+                                            <div class="detail-icon bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-briefcase"></i></div>
+                                            <div>
+                                                <div class="small text-muted text-uppercase fw-semibold mb-1">Employment Type</div>
+                                                <div class="fw-bold fs-5 text-dark">Full Time</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="detail-corporate-card d-flex align-items-center h-100 mb-0">
+                                            <div class="detail-icon bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-graduation-cap"></i></div>
+                                            <div>
+                                                <div class="small text-muted text-uppercase fw-semibold mb-1">Eligibility / Min CGPA</div>
+                                                <div class="fw-bold fs-5 text-dark" th:text="${job.eligibilityCriteria != null ? job.eligibilityCriteria : 'Not Specified'}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="detail-corporate-card d-flex align-items-center h-100 mb-0">
+                                            <div class="detail-icon bg-info bg-opacity-10 text-info"><i class="fa-solid fa-star"></i></div>
+                                            <div>
+                                                <div class="small text-muted text-uppercase fw-semibold mb-1">Experience Level</div>
+                                                <div class="fw-bold fs-5 text-dark">Fresher</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-5">
+                                    <h4 class="fw-bold border-bottom pb-2 mb-3 text-dark">Job Description</h4>
+                                    <div class="text-muted" style="white-space: pre-wrap; line-height: 1.7; font-size: 1.05rem;" th:text="${job.jobDescription}"></div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <h4 class="fw-bold border-bottom pb-2 mb-3 text-dark">Required Skills</h4>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 py-2 px-3 fs-6 rounded-pill" th:each="skill : ${#strings.arraySplit(job.requiredSkills, ',')}" th:text="${#strings.trim(skill)}"></span>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

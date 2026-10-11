@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roshin AI | Predictive Placement Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/shape-grid.css}" href="/css/shape-grid.css">
+    
+    <style>
+        :root {
+            --navy-dark: #101828;
+            --navy: #0F172A;
+            --orange: #F59E0B; 
+            --orange-sec: #FB923C;
+            --bg-color: #F8FAFC;
+            --white: #FFFFFF;
+            --text-main: #0F172A;
+            --text-muted: #667085;
+            --cyan: #06B6D4;
+            --green: #10B981;
+            --border-light: rgba(15, 23, 42, 0.08);
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --header-height: 80px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-main); background-color: var(--bg-color); color: var(--text-main); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+        /* -------------------------------------- */
+        /* 1. SEPARATE HEADER LAYER               */
+        /* -------------------------------------- */
+        .nav-wrapper { 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; 
+            height: var(--header-height); 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 40px; 
+            z-index: 1000; 
+            background: rgba(248, 250, 252, 0.95); /* Subtly translucent but solid enough */
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-light); 
+        }
+        .nav-brand { font-size: 1.5rem; font-weight: 900; display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-main); }
+        .nav-brand i { color: var(--orange); }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .btn-nav { padding: 10px 24px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 0.95rem; transition: all 0.3s ease; }
+        .btn-login { color: var(--text-main); }
+        .btn-login:hover { color: var(--orange); }
+        .btn-signup { background: var(--navy); color: var(--white); }
+        .btn-signup:hover { transform: scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+        /* -------------------------------------- */
+        /* PAGE STRUCTURE                         */
+        /* -------------------------------------- */
+        main {
+            padding-top: var(--header-height); /* Hero starts STRICTLY below header */
+        }
+        
+        #master-scroll-track { 
+            height: 2000vh; 
+            width: 100%; 
+            position: relative; 
+        }
+        
+        #viewport { 
+            width: 100vw; 
+            height: calc(100vh - var(--header-height)); 
+            overflow: hidden; 
+            position: relative; 
+            background: var(--bg-color);
+        }
+        
+        /* 3D Canvas */
+        #webgl-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; opacity: 0; }
+
+        /* Depth Background Texts */
+        .bg-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 15vw; font-weight: 900; color: rgba(15, 23, 42, 0.02); white-space: nowrap; z-index: 2; opacity: 0; letter-spacing: -0.05em; pointer-events: none; }
+        
+        /* Stage Typography Element */
+        .stage-title { position: absolute; top: 10%; left: 50%; transform: translateX(-50%); font-size: 1.8rem; font-weight: 900; color: var(--navy); opacity: 0; z-index: 20; letter-spacing: 2px; text-align: center; }
+        .stage-sub { font-size: 1rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0px; margin-top: 5px; }
+
+        /* -------------------------------------- */
+        /* HERO INITIAL STATE                     */
+        /* -------------------------------------- */
+        #hero-grid { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; align-items: center; justify-content: space-between;
+            max-width: 1400px; margin: 0 auto; left: 50%; transform: translateX(-50%);
+            padding: 0 40px;
+            z-index: 20; 
+        }
+
+        #hero-left { width: 48%; display: flex; flex-direction: column; justify-content: center; z-index: 30; }
+        .hero-badge { display: inline-block; background: rgba(245,158,11,0.1); color: var(--orange-sec); padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; border: 1px solid rgba(245,158,11,0.2); margin-bottom: 20px; align-self: flex-start; }
+        h1 { font-size: clamp(3rem, 4.5vw, 4.5rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 20px; color: var(--navy); }
+        .hero-sub { font-size: 1.15rem; color: var(--text-muted); line-height: 1.6; max-width: 480px; margin-bottom: 40px; font-weight: 500; }
+        .btn-cta-orange { background: var(--orange); color: var(--white); padding: 16px 32px; border-radius: 50px; font-size: 1.1rem; font-weight: 700; text-decoration: none; display: inline-block; }
+        
+        /* Hero Right Composition */
+        #hero-right { width: 48%; height: 600px; position: relative; z-index: 20; }
+        
+        .u-card { background: var(--white); border-radius: 16px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08); border: 1px solid var(--border-light); padding: 25px; position: absolute; z-index: 10; color: var(--navy); }
+        
+        #act-profile { top: 0; left: 0; width: 260px; z-index: 15; }
+        #act-job { bottom: 0%; right: 0; width: 280px; background: var(--navy); color: var(--white); border: none; z-index: 15; }
+        #fake-ai { top: 60%; left: 60%; transform: translate(-50%, -50%); width: 120px; height: 120px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 1.5rem; z-index: 10; position: absolute; border: 4px solid var(--border-light); }
+        
+        /* RESUME ACTOR */
+        #act-resume { top: 30%; left: 60px; width: 340px; z-index: 20; padding: 30px; position: absolute; }
+        .res-hdr { border-bottom: 1px solid var(--border-light); padding-bottom: 15px; margin-bottom: 15px; }
+        .res-name { font-weight: 900; font-size: 1.2rem; }
+        .res-section { margin-bottom: 15px; position: relative; padding: 5px; border-radius: 8px; transition: background 0.3s; }
+        .res-section-title { font-size: 0.75rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .res-skills { display: flex; flex-wrap: wrap; gap: 8px; }
+        .res-skill { background: rgba(15, 23, 42, 0.04); padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+        .res-proj { font-size: 0.9rem; font-weight: 700; color: var(--navy); line-height: 1.4; }
+        #act-scan { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--cyan); box-shadow: 0 0 15px var(--cyan); opacity: 0; z-index: 25; pointer-events: none; }
+        
+        /* -------------------------------------- */
+        /* CINEMATIC ELEMENTS                     */
+        /* -------------------------------------- */
+        
+        /* Extraction Particles */
+        .dp { position: absolute; font-weight: 800; font-size: 0.8rem; padding: 4px 12px; background: var(--cyan); color: white; border-radius: 20px; opacity: 0; z-index: 35; box-shadow: 0 10px 20px rgba(6,182,212,0.3); pointer-events: none; }
+        
+        /* Job Requirements Card */
+        #act-job-reqs { position: absolute; top: 50%; right: -400px; transform: translateY(-50%); width: 340px; z-index: 20; background: var(--navy); color: white; border: none; opacity: 0; }
+        .jr-tag { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; display: inline-block; margin-bottom: 15px; }
+        .jr-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 5px; }
+        .jr-sub { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 20px; }
+        .jr-reqs { display: flex; flex-direction: column; gap: 10px; }
+        .jr-req { background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 8px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Comparison Lists */
+        .comp-list { position: absolute; top: 50%; transform: translateY(-50%); width: 250px; z-index: 30; opacity: 0; display: flex; flex-direction: column; gap: 15px; }
+        #comp-cand { left: 15%; }
+        #comp-job { right: 15%; }
+        .comp-item { background: white; padding: 12px 20px; border-radius: 12px; font-weight: 800; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        
+        /* Calculated Stats */
+        #calc-stats { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0; text-align: center; z-index: 40; }
+        .calc-stat { font-size: 2rem; font-weight: 900; color: var(--navy); margin: 10px 0; opacity: 0; transform: translateY(20px); }
+        .calc-stat span { color: var(--orange); font-size: 3rem; margin-left: 10px; }
+        
+        /* Skill Gap Alert */
+        #skill-gap { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; opacity: 0; z-index: 45; }
+        .sg-badge { background: rgba(239, 68, 68, 0.1); color: #EF4444; padding: 8px 20px; border-radius: 20px; font-weight: 900; font-size: 1rem; margin-bottom: 20px; display: inline-block; }
+        .sg-skill { font-size: 4rem; font-weight: 900; color: var(--navy); line-height: 1; }
+        .sg-box { display: flex; gap: 20px; margin-top: 30px; }
+        .sg-card { background: white; padding: 20px 30px; border-radius: 16px; border: 1px solid var(--border-light); box-shadow: 0 20px 40px rgba(0,0,0,0.05); text-align: left; }
+        
+        /* Placement Analytics */
+        #pred-analytics { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; gap: 20px; opacity: 0; z-index: 50; flex-wrap: wrap; justify-content: center; width: 800px; }
+        .pa-card { background: white; padding: 30px; border-radius: 16px; border: 1px solid var(--border-light); box-shadow: 0 20px 50px rgba(0,0,0,0.08); width: calc(50% - 10px); opacity: 0; transform: translateY(30px); }
+        .pa-val { font-size: 3rem; font-weight: 900; color: var(--orange); line-height: 1; margin-bottom: 10px; }
+        .pa-lbl { font-size: 1rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Final Result */
+        #final-result { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; padding: 40px; background: white; border-radius: 24px; box-shadow: 0 30px 80px rgba(0,0,0,0.1); opacity: 0; z-index: 60; }
+        .fr-hdr { font-size: 2.5rem; font-weight: 900; color: var(--navy); margin-bottom: 5px; }
+        .fr-sub { font-size: 1.1rem; color: var(--text-muted); font-weight: 600; margin-bottom: 30px; }
+        .fr-stat-row { display: flex; justify-content: space-between; border-top: 1px solid var(--border-light); padding-top: 20px; margin-top: 20px; }
+        
+        /* -------------------------------------- */
+        /* RESPONSIVE                             */
+        /* -------------------------------------- */
+        @media (max-width: 1024px) {
+            #master-scroll-track { display: none; }
+            #viewport { height: auto; overflow: visible; padding: 50px 0; background: var(--bg-color); }
+            #hero-grid { position: relative; flex-direction: column; align-items: center; justify-content: flex-start; height: auto; transform: none; left: 0; }
+            #hero-left { width: 100%; align-items: flex-start; margin-bottom: 50px; }
+            #hero-right { width: 100%; display: flex; flex-direction: column; gap: 20px; height: auto; align-items: center; position: relative; }
+            .u-card, #fake-ai { position: relative; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; transform: none !important; width: 100%; max-width: 400px; margin: 0; }
+            #webgl-container, .bg-text, .stage-title { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. STANDALONE HEADER LAYER -->
+    <header class="nav-wrapper" id="navbar">
+        <a th:href="@{/}" class="nav-brand"><i class="fa-solid fa-layer-group"></i> Roshin AI</a>
+        <div class="nav-links">
+            <a th:href="@{/login}" class="btn-nav btn-login">Sign In</a>
+            <a th:href="@{/register}" class="btn-nav btn-signup">Get Started</a>
+        </div>
+    </header>
+
+    <!-- 2. MAIN CONTENT (Starts firmly below header) -->
+    <main>
+        
+        <div id="master-scroll-track">
+            <!-- 3. VIEWPORT (This element gets pinned by GSAP) -->
+            <div id="viewport">
+                
+                <!-- ShapeGrid Interactive Background (React Bits) -->
+                <div class="shapegrid-container" id="shapegrid-wrapper">
+                    <canvas id="shapegrid-canvas" class="shapegrid-canvas"></canvas>
+                </div>
+
+                <!-- 3D Canvas -->
+                <div id="webgl-container"></div>
+                
+                <!-- Background Typography -->
+                <div class="bg-text" id="bg-txt">ANALYZING</div>
+                
+                <!-- Stage Title -->
+                <div class="stage-title">
+                    <span id="st-main"></span><br>
+                    <span class="stage-sub" id="st-sub"></span>
+                </div>
+
+                <!-- PHASE 1: HERO (Contained properly in the grid) -->
+                <div id="hero-grid">
+                    <div id="hero-left">
+                        <div class="hero-badge">AI-POWERED PLACEMENT INTELLIGENCE</div>
+                        <h1>Transform Hiring<br>with Predictive AI</h1>
+                        <p class="hero-sub">AI-powered resume analysis, skill-gap detection, job matching and placement intelligence.</p>
+                        <div>
+                            <a th:href="@{/register}" class="btn-cta-orange" style="margin-right: 15px;">Get Started</a>
+                            <a th:href="@{/login}" class="btn-nav" style="border: 2px solid rgba(15,23,42,0.1); padding: 15px 30px;">Explore Opportunities</a>
+                        </div>
+                    </div>
+                    
+                    <div id="hero-right">
+                        <div class="u-card" id="act-profile">
+                            <div style="font-weight: 800; font-size: 1.2rem;">ROSHIN R S</div>
+                            <div style="font-size:0.85rem; color:var(--text-muted); font-weight:600; margin-bottom: 10px;">Student ID: #8849</div>
+                            <div style="font-size: 0.9rem; font-weight: 600; color: var(--navy);">Status: Actively Looking</div>
+                        </div>
+
+                        <div class="u-card" id="act-resume">
+                            <div class="res-hdr">
+                                <div class="res-name">ROSHIN R S</div>
+                                <div style="color:var(--text-muted); font-size:0.8rem; font-weight:600;"><i class="fa-solid fa-file-pdf" style="color:var(--orange);"></i> RESUME.PDF</div>
+                            </div>
+                            
+                            <div class="res-section" id="res-edu">
+                                <div class="res-section-title">Education</div>
+                                <div class="res-proj">MCA<br><span style="color:var(--text-muted); font-size:0.8rem;">Computer Applications • 8.2 CGPA</span></div>
+                            </div>
+                            
+                            <div class="res-section" id="res-skl">
+                                <div class="res-section-title">Skills</div>
+                                <div class="res-skills">
+                                    <div class="res-skill">Java</div>
+                                    <div class="res-skill">Python</div>
+                                    <div class="res-skill">MySQL</div>
+                                    <div class="res-skill">Spring Boot</div>
+                                </div>
+                            </div>
+                            
+                            <div class="res-section" id="res-prj">
+                                <div class="res-section-title">Projects</div>
+                                <div class="res-proj">AI Placement Prediction System</div>
+                            </div>
+
+                            <div class="res-section" id="res-cert" style="margin-bottom:0;">
+                                <div class="res-section-title">Certifications</div>
+                                <div class="res-proj">Deep Learning Specialization</div>
+                            </div>
+                            
+                            <div id="act-scan"></div>
+                        </div>
+
+                        <div id="fake-ai">AI</div>
+
+                        <div class="u-card dark" id="act-job">
+                            <div style="background: rgba(16, 185, 129, 0.2); color: var(--green); padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; margin-bottom: 15px; display: inline-block;">OPEN POSITION</div>
+                            <div style="font-size: 1.1rem; font-weight: 800; margin-bottom: 5px;">SOFTWARE ENGINEER</div>
+                            <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Google • Bengaluru • 18 LPA</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REST OF CINEMATIC ACTORS -->
+                <div class="dp" id="dp-1">JAVA</div>
+                <div class="dp" id="dp-2">PYTHON</div>
+                <div class="dp" id="dp-3">SQL</div>
+                <div class="dp" id="dp-4">SPRING BOOT</div>
+                <div class="dp" id="dp-5">MCA</div>
+                <div class="dp" id="dp-6">PROJECT</div>
+
+                <div class="u-card" id="act-job-reqs">
+                    <div class="jr-tag">FULL TIME</div>
+                    <div class="jr-title">SOFTWARE ENGINEER</div>
+                    <div class="jr-sub">Google • Bengaluru • 18 LPA</div>
+                    <div class="jr-reqs">
+                        <div class="jr-req" id="jr-java">Java <i class="fa-solid fa-circle-check" style="color:rgba(255,255,255,0.2);"></i></div>
+                        <div class="jr-req" id="jr-spr">Spring Boot <i class="fa-solid fa-circle-check" style="color:rgba(255,255,255,0.2);"></i></div>
+                        <div class="jr-req" id="jr-sql">SQL <i class="fa-solid fa-circle-check" style="color:rgba(255,255,255,0.2);"></i></div>
+                        <div class="jr-req" id="jr-aws">AWS <i class="fa-solid fa-circle-check" style="color:rgba(255,255,255,0.2);"></i></div>
+                    </div>
+                </div>
+
+                <div class="comp-list" id="comp-cand">
+                    <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted); letter-spacing:1px; margin-bottom:5px;">CANDIDATE</div>
+                    <div class="comp-item cc-i">Java <i class="fa-solid fa-check" style="color:var(--cyan);"></i></div>
+                    <div class="comp-item cc-i">Python <i class="fa-solid fa-check" style="color:var(--cyan);"></i></div>
+                    <div class="comp-item cc-i">SQL <i class="fa-solid fa-check" style="color:var(--cyan);"></i></div>
+                    <div class="comp-item cc-i">Spring Boot <i class="fa-solid fa-check" style="color:var(--cyan);"></i></div>
+                </div>
+                
+                <div class="comp-list" id="comp-job">
+                    <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted); letter-spacing:1px; margin-bottom:5px;">JOB REQUIREMENTS</div>
+                    <div class="comp-item cj-i">Java <i class="fa-solid fa-check" style="color:var(--green);"></i></div>
+                    <div class="comp-item cj-i">Spring Boot <i class="fa-solid fa-check" style="color:var(--green);"></i></div>
+                    <div class="comp-item cj-i">SQL <i class="fa-solid fa-check" style="color:var(--green);"></i></div>
+                    <div class="comp-item cj-aws">AWS <i class="fa-solid fa-xmark" style="color:#EF4444;"></i></div>
+                </div>
+
+                <div id="calc-stats">
+                    <div class="calc-stat" id="cs-1">SKILL MATCH <span id="csv-1">0%</span></div>
+                    <div class="calc-stat" id="cs-2">EDUCATION <span id="csv-2">0%</span></div>
+                    <div class="calc-stat" id="cs-3">ELIGIBILITY <span id="csv-3">0%</span></div>
+                    <div class="calc-stat" id="cs-4">EXPERIENCE <span id="csv-4">0%</span></div>
+                    
+                    <div class="calc-stat" id="cs-final" style="font-size: 5rem; margin-top: 40px; color:var(--orange);">
+                        <span id="csv-final" style="font-size: 8rem; margin:0;">0%</span><br>
+                        <div style="font-size:1.5rem; color:var(--navy); letter-spacing:5px;">STRONG MATCH</div>
+                    </div>
+                </div>
+
+                <div id="skill-gap">
+                    <div class="sg-badge">SKILL GAP DETECTED</div>
+                    <div class="sg-skill">AWS</div>
+                    <div class="sg-box">
+                        <div class="sg-card">
+                            <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">YOUR CURRENT MATCH</div>
+                            <div style="font-size:2.5rem; font-weight:900; color:var(--navy);">87%</div>
+                        </div>
+                        <div class="sg-card" style="border-color:var(--green);">
+                            <div style="font-size:0.8rem; font-weight:800; color:var(--green);">WITH RECOMMENDED SKILL</div>
+                            <div style="font-size:2.5rem; font-weight:900; color:var(--green);">91%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pred-analytics">
+                    <div class="pa-card">
+                        <div class="pa-val">92%</div>
+                        <div class="pa-lbl">Profile Strength</div>
+                    </div>
+                    <div class="pa-card">
+                        <div class="pa-val">8 / 9</div>
+                        <div class="pa-lbl">Skills Matched</div>
+                    </div>
+                    <div class="pa-card">
+                        <div class="pa-val">3</div>
+                        <div class="pa-lbl">Recommended Roles</div>
+                    </div>
+                    <div class="pa-card">
+                        <div class="pa-val" style="color:var(--green);">HIGH</div>
+                        <div class="pa-lbl">Placement Readiness</div>
+                    </div>
+                </div>
+
+                <div id="final-result">
+                    <div class="fr-hdr">ROSHIN R S</div>
+                    <div class="fr-sub">MCA · Computer Applications · 8.2 CGPA</div>
+                    
+                    <div style="display:flex; gap:10px; margin-bottom:30px;">
+                        <span style="background:var(--navy); color:white; padding:5px 12px; border-radius:6px; font-size:0.85rem; font-weight:700;">Java</span>
+                        <span style="background:var(--navy); color:white; padding:5px 12px; border-radius:6px; font-size:0.85rem; font-weight:700;">Python</span>
+                        <span style="background:var(--navy); color:white; padding:5px 12px; border-radius:6px; font-size:0.85rem; font-weight:700;">SQL</span>
+                        <span style="background:var(--navy); color:white; padding:5px 12px; border-radius:6px; font-size:0.85rem; font-weight:700;">Spring Boot</span>
+                    </div>
+
+                    <div class="fr-stat-row">
+                        <div>
+                            <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">PROFILE STRENGTH</div>
+                            <div style="font-size:1.5rem; font-weight:900; color:var(--cyan);">92%</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted);">BEST MATCH</div>
+                            <div style="font-size:1.2rem; font-weight:800; color:var(--navy);">Software Engineer</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.8rem; font-weight:800; color:var(--green);">SCORE</div>
+                            <div style="font-size:1.5rem; font-weight:900; color:var(--green);">87% MATCH</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- End Viewport -->
+        </div> <!-- End Scroll Track -->
+
+    </main>
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+    <script src="/js/shape-grid.js"></script>
+    <script src="/js/index-animations.js"></script>
+</body>
+</html>

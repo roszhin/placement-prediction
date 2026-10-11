@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applicant Review Dashboard - Skill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #F8FAFC;
+        }
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Layout */
+        .left-col { width: 70%; padding-right: 15px; }
+        .right-col { width: 30%; padding-left: 15px; }
+        
+        @media (max-width: 991px) {
+            .left-col, .right-col { width: 100%; padding: 0; }
+            .right-col { margin-top: 20px; }
+        }
+
+        /* Header Card */
+        .header-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .profile-img-large {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 4px solid #F8FAFC;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #94A3B8;
+        }
+        
+        /* Badges */
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 50rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-APPLIED { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+        .status-UNDER_REVIEW { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+        .status-SHORTLISTED { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+        .status-SELECTED { background: rgba(5, 150, 105, 0.1); color: #059669; }
+        .status-REJECTED { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+
+        .score-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #F8FAFC;
+            border: 1px solid #E5E7EB;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4B5563;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-action-shortlist { background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .btn-action-shortlist:hover { background: #10B981; color: white; }
+        
+        .btn-action-hire { background: rgba(59, 130, 246, 0.1); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .btn-action-hire:hover { background: #3B82F6; color: white; }
+        
+        .btn-action-review { background: rgba(245, 158, 11, 0.1); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .btn-action-review:hover { background: #F59E0B; color: white; }
+        
+        .btn-action-reject { background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-action-reject:hover { background: #EF4444; color: white; }
+
+        /* Standard Cards */
+        .dashboard-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+            border: 1px solid #F1F5F9;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #F1F5F9;
+            padding-bottom: 15px;
+        }
+        .card-title i { color: #F59E0B; }
+
+        /* Data Grid */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .data-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .data-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #94A3B8;
+            letter-spacing: 0.5px;
+        }
+        .data-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+            word-break: break-word;
+        }
+
+        /* AI Analysis Styles */
+        .score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border: 4px solid #10B981;
+            margin: 0 auto;
+        }
+        .progress-slim {
+            height: 8px;
+            border-radius: 4px;
+            background: #F1F5F9;
+            margin-top: 5px;
+        }
+
+        /* Tag Badges */
+        .tag-badge {
+            background: #F1F5F9;
+            color: #475569;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0 4px 8px 0;
+        }
+        .tag-badge.tag-success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+        .tag-badge.tag-danger { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 0;
+            list-style: none;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 11px;
+            height: 100%;
+            width: 2px;
+            background: #E2E8F0;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 5px; left: -24px;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: #F59E0B;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+        }
+        .timeline-item.completed::before { background: #10B981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
+        .timeline-date {
+            font-size: 0.75rem;
+            color: #94A3B8;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .timeline-content {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        /* Resume Card */
+        .resume-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 15px 20px;
+        }
+        
+        /* Notes Textarea */
+        .notes-area {
+            width: 100%;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 0.9rem;
+            color: #334155;
+            background: #F8FAFC;
+            resize: vertical;
+            min-height: 120px;
+            transition: all 0.2s;
+        }
+        .notes-area:focus {
+            outline: none;
+            border-color: #F59E0B;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+    </style>
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body data-theme="light" data-page-id="company-applicants">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+                
+                <div class="dashboard-container py-4">
+                    
+                    <!-- Header -->
+                    <div class="header-card">
+                        <div class="d-flex align-items-center gap-4">
+                            <img th:if="${student.profilePicture != null}" th:src="${student.profilePicture}" class="profile-img-large">
+                            <div th:unless="${student.profilePicture != null}" class="profile-img-large">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            
+                            <div>
+                                <h3 class="fw-bold text-dark mb-1" th:text="${student.name}">Student Name</h3>
+                                <div class="text-muted mb-3 fs-6">
+                                    <span class="me-3"><i class="fa-solid fa-envelope me-1"></i> <span th:text="${student.email}"></span></span>
+                                    <span class="me-3"><i class="fa-solid fa-phone me-1"></i> <span th:text="${student.phoneNumber != null ? student.phoneNumber : 'N/A'}"></span></span>
+                                    <span><i class="fa-solid fa-location-dot me-1"></i> <span th:text="${student.address != null ? student.address : 'N/A'}"></span></span>
+                                </div>
+                                
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span id="headerStatusBadge" th:class="'status-badge status-' + ${application.status}" th:text="${application.status}">APPLIED</span>
+                                    
+                                    <div class="score-badge" th:if="${application.atsScore != null}">
+                                        <i class="fa-solid fa-robot text-info"></i> AI Match: <span th:text="${#numbers.formatDecimal(application.atsScore, 1, 0) + '%'}"></span>
+                                    </div>
+                                    <div class="score-badge">
+                                        <i class="fa-regular fa-calendar text-muted"></i> Applied: <span th:text="${#temporals.format(application.appliedAt, 'dd MMM yyyy')}"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn-action btn-action-review" onclick="updateStatus('UNDER_REVIEW')">
+                                <i class="fa-solid fa-eye"></i> Under Review
+                            </button>
+                            <button type="button" class="btn-action btn-action-shortlist" onclick="updateStatus('SHORTLISTED')">
+                                <i class="fa-solid fa-list-check"></i> Shortlist
+                            </button>
+                            <button type="button" class="btn-action btn-action-hire" onclick="updateStatus('SELECTED')">
+                                <i class="fa-solid fa-handshake"></i> Hire / Select
+                            </button>
+                            <button type="button" class="btn-action btn-action-reject" onclick="updateStatus('REJECTED')">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap">
+                        
+                        <!-- LEFT COLUMN -->
+                        <div class="left-col">
+                            
+                            <!-- Resume Section -->
+                            <div class="dashboard-card">
+                                <h4 class="card-title"><i class="fa-solid fa-file-pdf"></i> Resume</h4>
+                                <div class="resume-card" th:if="${resume != null}">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <i class="fa-solid fa-file-pdf text-danger fs-1"></i>
+                                        <div>
+                                            <div class="fw-bold text-dark" th:text="${resume.fileName}">Resume.pdf</div>
+                                            <div class="text-muted small">Uploaded: <span th:text="${#temporals.format(resume.uploadedAt, 'dd MMM yyyy')}"></span></div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a th:href="@{/company/resume/view/{id}(id=${resume.id})}" target="_blank" class="btn btn-light border fw-bold px-3 py-2 rounded-3 text-secondary">
+                                            <i class="fa-solid fa-eye me-1"></i> View
+                                        </a>
+                                        <a th:href="@{/company/resume/download/{id}(id=${resume.id})}" class="btn btn-primary fw-bold px-3 py-2 rounded-3 text-white shadow-sm" style="background-color: #F59E0B; border:none;">
+                                            <i class="fa-solid fa-download me-1"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="text-center py-3 text-muted" th:unless="${resume != null}">
+                                    <i class="fa-solid fa-file-excel fs-1 mb-2"></i>
+                                    <p class="mb-0">No resume available.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- AI Analysis -->
+                            <div class="dashboard-card" th:if="${application.atsScore != null}">
+                                <h4 class="card-title"><i class="fa-solid fa-brain"></i> AI Analysis</h4>
+                                <div class="row align-items-center">
+                                    <div class="col-md-3 text-center mb-3 mb-md-0 border-end">
+                                        <div class="score-circle mb-2" th:style="'border-color: ' + (${application.atsScore >= 75 ? '#10B981' : (application.atsScore >= 50 ? '#F59E0B' : '#EF4444')})">
+                                            <h3 class="fw-bold text-dark m-0" th:text="${#numbers.formatDecimal(application.atsScore, 1, 0) + '%'}">0%</h3>
+                                        </div>
+                                        <div class="fw-bold text-secondary">Overall Match</div>
+                                    </div>
+                                    <div class="col-md-9 ps-md-4">
+                                        
+                                        <div class="row g-3">
+                                            <div class="col-sm-6">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span class="data-label">Skill Match</span>
+                                                    <span class="fw-bold text-dark" th:text="${application.skillMatchScore != null ? #numbers.formatDecimal(application.skillMatchScore, 1, 0) + '%' : 'N/A'}"></span>
+                                                </div>
+                                                <div class="progress progress-slim">
+                                                    <div class="progress-bar bg-primary" th:style="'width: ' + (${application.skillMatchScore != null ? application.skillMatchScore : 0}) + '%'"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span class="data-label">Eligibility Match</span>
+                                                    <span class="fw-bold text-dark" th:text="${application.eligibilityScore != null ? #numbers.formatDecimal(application.eligibilityScore, 1, 0) + '%' : 'N/A'}"></span>
+                                                </div>
+                                                <div class="progress progress-slim">
+                                                    <div class="progress-bar bg-success" th:style="'width: ' + (${application.eligibilityScore != null ? application.eligibilityScore : 0}) + '%'"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-4" th:if="${application.missingSkills != null && !application.missingSkills.isEmpty()}">
+                                            <span class="data-label text-danger d-block mb-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Missing Skills</span>
+                                            <span class="tag-badge tag-danger" th:each="skill : ${#strings.arraySplit(application.missingSkills, ',')}" th:text="${#strings.trim(skill)}"></span>
+                                        </div>
+                                        
+                                        <div class="mt-3 p-3 bg-light rounded-3 border" th:if="${application.aiFeedback != null && !application.aiFeedback.isEmpty()}">
+                                            <span class="data-label d-block mb-1 text-primary"><i class="fa-solid fa-comment-dots me-1"></i> AI Feedback</span>
+                                            <div class="text-secondary small mb-0" th:text="${application.aiFeedback}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Student Profile (Academic) -->
+                            <div class="dashboard-card">
+                                <h4 class="card-title"><i class="fa-solid fa-graduation-cap"></i> Academic Details</h4>
+                                <div class="data-grid">
+                                    <div class="data-item">
+                                        <span class="data-label">College / University</span>
+                                        <span class="data-value" th:text="${student.college != null ? student.college : (student.university != null ? student.university : 'Not specified')}"></span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Degree / Course</span>
+                                        <span class="data-value" th:text="${student.course != null ? student.course : 'Not specified'}"></span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Department</span>
+                                        <span class="data-value" th:text="${student.department != null ? student.department : 'Not specified'}"></span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Roll Number</span>
+                                        <span class="data-value" th:text="${student.rollNumber != null ? student.rollNumber : 'Not specified'}"></span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">CGPA</span>
+                                        <span class="data-value fw-bold text-success" th:text="${student.cgpa != null ? student.cgpa : 'N/A'}"></span>
+                                    </div>
+                                    <div class="data-item">
+                                        <span class="data-label">Graduation Year</span>
+                                        <span class="data-value" th:text="${student.passingYear != null ? student.passingYear : 'N/A'}"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Skills & Projects -->
+                            <div class="dashboard-card">
+                                <h4 class="card-title"><i class="fa-solid fa-laptop-code"></i> Skills & Experience</h4>
+                                
+                                <div class="mb-4">
+                                    <span class="data-label d-block mb-2">Technical Skills</span>
+                                    <div th:if="${student.technicalSkills != null && !student.technicalSkills.isEmpty()}">
+                                        <span class="tag-badge tag-success" th:each="skill : ${#strings.arraySplit(student.technicalSkills, ',')}" th:text="${#strings.trim(skill)}"></span>
+                                    </div>
+                                    <div th:unless="${student.technicalSkills != null && !student.technicalSkills.isEmpty()}" class="text-muted small fst-italic">Not specified</div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <span class="data-label d-block mb-2">Certifications</span>
+                                    <div class="data-value bg-light p-3 rounded-3 border" style="white-space: pre-wrap;" th:text="${student.certifications != null && !student.certifications.isEmpty() ? student.certifications : 'No certifications listed.'}"></div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <span class="data-label d-block mb-2">Internships / Experience</span>
+                                    <div class="data-value bg-light p-3 rounded-3 border" style="white-space: pre-wrap;" th:text="${student.experience != null && !student.experience.isEmpty() ? student.experience : 'No experience listed.'}"></div>
+                                </div>
+                                
+                                <div>
+                                    <span class="data-label d-block mb-2">Projects</span>
+                                    <div class="data-value bg-light p-3 rounded-3 border" style="white-space: pre-wrap;" th:text="${student.projects != null && !student.projects.isEmpty() ? student.projects : 'No projects listed.'}"></div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- RIGHT COLUMN -->
+                        <div class="right-col">
+                            
+                            <!-- Applied Job Summary -->
+                            <div class="dashboard-card">
+                                <h4 class="card-title"><i class="fa-solid fa-briefcase"></i> Applied Job</h4>
+                                <div class="d-flex flex-column gap-3">
+                                    <div>
+                                        <div class="data-label">Job Title</div>
+                                        <div class="fw-bold text-dark" th:text="${application.job.jobTitle}"></div>
+                                    </div>
+                                    <div>
+                                        <div class="data-label">Package</div>
+                                        <div class="text-success fw-bold" th:text="${application.job.packageOffered != null ? application.job.packageOffered : (application.job.salaryLpa != null ? application.job.salaryLpa + ' LPA' : 'Not Specified')}"></div>
+                                    </div>
+                                    <div>
+                                        <div class="data-label">Location</div>
+                                        <div class="data-value" th:text="${application.job.location}"></div>
+                                    </div>
+                                    <div>
+                                        <div class="data-label">Employment Type</div>
+                                        <div class="data-value" th:text="${application.job.employmentType != null ? application.job.employmentType : 'Full Time'}"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Application Timeline -->
+                            <div class="dashboard-card">
+                                <h4 class="card-title"><i class="fa-solid fa-timeline"></i> Timeline</h4>
+                                <ul class="timeline" id="applicationTimeline">
+                                    <li class="timeline-item completed">
+                                        <div class="timeline-date" th:text="${#temporals.format(application.appliedAt, 'dd MMM yyyy, hh:mm a')}"></div>
+                                        <div class="timeline-content">Applied</div>
+                                    </li>
+                                    <li th:class="'timeline-item ' + (${application.atsScore != null ? 'completed' : ''})">
+                                        <div class="timeline-date" th:text="${application.atsScore != null ? 'AI Analysis Complete' : 'Pending Analysis'}"></div>
+                                        <div class="timeline-content">AI Screened</div>
+                                    </li>
+                                    
+                                    <li class="timeline-item completed" th:if="${application.underReviewAt != null}">
+                                        <div class="timeline-date" th:text="${#temporals.format(application.underReviewAt, 'dd MMM yyyy, hh:mm a')}"></div>
+                                        <div class="timeline-content">Under Review</div>
+                                    </li>
+                                    <li class="timeline-item completed" th:if="${application.shortlistedAt != null}">
+                                        <div class="timeline-date" th:text="${#temporals.format(application.shortlistedAt, 'dd MMM yyyy, hh:mm a')}"></div>
+                                        <div class="timeline-content text-success fw-bold">Shortlisted</div>
+                                    </li>
+                                    <li class="timeline-item completed" th:if="${application.selectedAt != null}">
+                                        <div class="timeline-date" th:text="${#temporals.format(application.selectedAt, 'dd MMM yyyy, hh:mm a')}"></div>
+                                        <div class="timeline-content text-success fw-bold">Selected / Hired</div>
+                                    </li>
+                                    <li class="timeline-item completed" th:if="${application.rejectedAt != null}">
+                                        <div class="timeline-date" th:text="${#temporals.format(application.rejectedAt, 'dd MMM yyyy, hh:mm a')}"></div>
+                                        <div class="timeline-content text-danger fw-bold">Rejected <br>
+                                            <small class="text-muted fw-normal" th:text="'Reason: ' + ${application.rejectionReason}"></small>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Interview Details -->
+                            <div class="dashboard-card" id="interviewCard" th:style="${application.interviewDate != null ? 'display:block;' : 'display:none;'}">
+                                <h4 class="card-title"><i class="fa-solid fa-calendar-check text-primary"></i> Interview Scheduled</h4>
+                                <div class="d-flex flex-column gap-2 mb-3">
+                                    <div>
+                                        <span class="data-label">Date & Time</span>
+                                        <div class="fw-bold text-dark"><span id="lblIntDate" th:text="${application.interviewDate}"></span> at <span id="lblIntTime" th:text="${application.interviewTime}"></span></div>
+                                    </div>
+                                    <div>
+                                        <span class="data-label">Mode</span>
+                                        <div class="data-value" id="lblIntMode" th:text="${application.interviewMode}"></div>
+                                    </div>
+                                    <div>
+                                        <span class="data-label">Meeting Link / Location</span>
+                                        <div class="data-value" style="word-break: break-all;">
+                                            <a id="lblIntLink" th:href="${application.interviewLink}" target="_blank" th:text="${application.interviewLink}"></a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm w-100 fw-bold rounded-pill" onclick="openInterviewModal()">Update Schedule</button>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="dashboard-card">
+                                <h4 class="card-title"><i class="fa-solid fa-bolt"></i> Quick Actions</h4>
+                                <div class="d-flex flex-column gap-2">
+                                    <button class="btn btn-light border fw-bold text-dark rounded-3 py-2 text-start px-3 shadow-sm" onclick="openInterviewModal()">
+                                        <i class="fa-solid fa-calendar-plus text-primary me-2"></i> Schedule Interview
+                                    </button>
+                                    <button class="btn btn-light border fw-bold text-dark rounded-3 py-2 text-start px-3 shadow-sm" onclick="sendEmail()">
+                                        <i class="fa-solid fa-envelope text-success me-2"></i> Send Email
+                                    </button>
+                                    <button class="btn btn-light border fw-bold text-dark rounded-3 py-2 text-start px-3 shadow-sm" onclick="requestDocs()">
+                                        <i class="fa-solid fa-file-circle-plus text-warning me-2"></i> Request Documents
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Recruiter Notes -->
+                            <div class="dashboard-card">
+                                <h4 class="card-title"><i class="fa-solid fa-pen-to-square"></i> Recruiter Notes</h4>
+                                <textarea id="recruiterNotes" class="notes-area mb-3" placeholder="Add private notes about this candidate here..." th:text="${application.recruiterNotes}"></textarea>
+                                <button class="btn btn-primary fw-bold w-100 rounded-pill shadow-sm" style="background-color: #F59E0B; border:none;" onclick="saveNotes()">
+                                    <i class="fa-solid fa-save me-1"></i> Save Notes
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Schedule Interview Modal -->
+    <div class="modal fade" id="interviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold"><i class="fa-solid fa-calendar-plus text-primary me-2"></i> Schedule Interview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="interviewForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary small">Date</label>
+                            <input type="date" class="form-control rounded-3" id="intDate" th:value="${application.interviewDate}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary small">Time</label>
+                            <input type="time" class="form-control rounded-3" id="intTime" th:value="${application.interviewTime}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary small">Mode</label>
+                            <select class="form-select rounded-3" id="intMode">
+                                <option value="Online" th:selected="${application.interviewMode == 'Online'}">Online (Video Call)</option>
+                                <option value="Offline" th:selected="${application.interviewMode == 'Offline'}">Offline (In-person)</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small">Meeting Link or Location</label>
+                            <input type="text" class="form-control rounded-3" id="intLink" placeholder="e.g. Zoom link or Office address" th:value="${application.interviewLink}" required>
+                        </div>
+                        <button type="button" class="btn btn-primary fw-bold w-100 rounded-pill py-2 shadow-sm" style="background-color: #F59E0B; border:none;" onclick="saveInterview()">Save & Notify Student</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate CSRF meta tag if not present for fetch APIs -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const appId = /*[[${application.id}]]*/ 0;
+        /*]]>*/
+        
+        const csrfMeta = document.querySelector('meta[name="_csrf"]');
+        const csrfToken = csrfMeta ? csrfMeta.content : '';
+        
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            };
+        }
+        
+        // Status Update
+        function updateStatus(newStatus) {
+            
+            // Check if already finalized
+            const currentStatus = document.getElementById('headerStatusBadge').textContent;
+            if (currentStatus === 'SELECTED' || currentStatus === 'REJECTED') {
+                if (currentStatus === 'SELECTED') Swal.fire('Notice', 'This candidate is already selected.', 'info');
+                if (currentStatus === 'REJECTED' && newStatus === 'SELECTED') Swal.fire('Notice', 'Cannot select a rejected candidate.', 'error');
+                return;
+            }
+
+            if (newStatus === 'REJECTED') {
+                Swal.fire({
+                    title: 'Reject Candidate',
+                    text: 'Please select a reason for rejection (optional):',
+                    input: 'select',
+                    inputOptions: {
+                        '': 'Select a reason...',
+                        'Not Qualified': 'Not Qualified',
+                        'Skill Gap': 'Skill Gap',
+                        'Low CGPA': 'Low CGPA',
+                        'Position Filled': 'Position Filled',
+                        'Other': 'Other'
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#EF4444',
+                    confirmButtonText: 'Yes, Reject',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        executeStatusUpdate('REJECTED', result.value);
+                    }
+                });
+            } else if (newStatus === 'SELECTED') {
+                Swal.fire({
+                    title: 'Select Candidate',
+                    text: 'Are you sure you want to select/hire this candidate?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10B981',
+                    confirmButtonText: 'Confirm Selection',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        executeStatusUpdate('SELECTED', null);
+                    }
+                });
+            } else {
+                // Shortlist or Under Review
+                executeStatusUpdate(newStatus, null);
+            }
+        }
+        
+        function executeStatusUpdate(newStatus, rejectionReason) {
+            const payload = { status: newStatus };
+            if (rejectionReason) payload.rejectionReason = rejectionReason;
+            
+            fetch(`/company/application/${appId}/status`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById('headerStatusBadge');
+                    badge.textContent = data.status;
+                    badge.className = `status-badge status-${data.status}`;
+                    
+                    // Add to timeline
+                    const timeline = document.getElementById('applicationTimeline');
+                    const li = document.createElement('li');
+                    li.className = 'timeline-item completed';
+                    
+                    let dateText = '';
+                    let contentText = '';
+                    
+                    if (newStatus === 'UNDER_REVIEW') {
+                        dateText = data.underReviewAt;
+                        contentText = 'Under Review';
+                    } else if (newStatus === 'SHORTLISTED') {
+                        dateText = data.shortlistedAt;
+                        contentText = '<span class="text-success fw-bold">Shortlisted</span>';
+                    } else if (newStatus === 'SELECTED') {
+                        dateText = data.selectedAt;
+                        contentText = '<span class="text-success fw-bold">Selected / Hired</span>';
+                    } else if (newStatus === 'REJECTED') {
+                        dateText = data.rejectedAt;
+                        let reasonHtml = data.rejectionReason ? `<br><small class="text-muted fw-normal">Reason: ${data.rejectionReason}</small>` : '';
+                        contentText = `<span class="text-danger fw-bold">Rejected</span>${reasonHtml}`;
+                    }
+                    
+                    li.innerHTML = `
+                        <div class="timeline-date">${dateText}</div>
+                        <div class="timeline-content">${contentText}</div>
+                    `;
+                    timeline.appendChild(li);
+                    
+                    // Disable buttons if finalized
+                    disableButtonsBasedOnStatus(data.status);
+                    
+                    // Toast
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Status Updated',
+                        text: `The application status has been updated to ${data.status}.`,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    Swal.fire('Error', data.error || 'Failed to update status', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'An unexpected error occurred.', 'error');
+            });
+        }
+        
+        function disableButtonsBasedOnStatus(status) {
+            if (status === 'SELECTED') {
+                document.querySelectorAll('.btn-action').forEach(btn => btn.disabled = true);
+            } else if (status === 'REJECTED') {
+                const hireBtn = document.querySelector('.btn-action-hire');
+                if(hireBtn) hireBtn.disabled = true;
+                const shortlistBtn = document.querySelector('.btn-action-shortlist');
+                if(shortlistBtn) shortlistBtn.disabled = true;
+                const reviewBtn = document.querySelector('.btn-action-review');
+                if(reviewBtn) reviewBtn.disabled = true;
+            }
+        }
+        
+        // Disable on load
+        document.addEventListener('DOMContentLoaded', () => {
+            disableButtonsBasedOnStatus(document.getElementById('headerStatusBadge').textContent);
+        });
+        
+        // Save Notes
+        function saveNotes() {
+            const notes = document.getElementById('recruiterNotes').value;
+            fetch(`/company/application/${appId}/notes`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ notes: notes })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved',
+                        text: 'Recruiter notes saved successfully.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                } else {
+                    Swal.fire('Error', 'Failed to save notes', 'error');
+                }
+            });
+        }
+        
+        // Interview
+        const interviewModal = new bootstrap.Modal(document.getElementById('interviewModal'));
+        
+        function openInterviewModal() {
+            interviewModal.show();
+        }
+        
+        function saveInterview() {
+            const date = document.getElementById('intDate').value;
+            const time = document.getElementById('intTime').value;
+            const mode = document.getElementById('intMode').value;
+            const link = document.getElementById('intLink').value;
+            
+            if(!date || !time || !link) {
+                Swal.fire('Warning', 'Please fill all fields', 'warning');
+                return;
+            }
+            
+            fetch(`/company/application/${appId}/schedule-interview`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ date, time, mode, link })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    interviewModal.hide();
+                    
+                    document.getElementById('lblIntDate').textContent = date;
+                    document.getElementById('lblIntTime').textContent = time;
+                    document.getElementById('lblIntMode').textContent = mode;
+                    document.getElementById('lblIntLink').textContent = link;
+                    document.getElementById('lblIntLink').href = link;
+                    
+                    document.getElementById('interviewCard').style.display = 'block';
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Interview Scheduled',
+                        text: 'Details saved and notification sent.',
+                    });
+                }
+            });
+        }
+        
+        // Email Actions
+        function sendEmail() {
+            Swal.fire({
+                title: 'Send Email',
+                input: 'textarea',
+                inputLabel: 'Message for the applicant',
+                inputPlaceholder: 'Type your message here...',
+                showCancelButton: true,
+                confirmButtonColor: '#F59E0B',
+                confirmButtonText: 'Send Email'
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    fetch(`/company/application/${appId}/send-email`, {
+                        method: 'POST',
+                        headers: getHeaders(),
+                        body: JSON.stringify({ message: result.value })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) {
+                            Swal.fire('Sent!', 'Email has been sent to the applicant.', 'success');
+                        }
+                    });
+                }
+            });
+        }
+        
+        function requestDocs() {
+            Swal.fire({
+                title: 'Request Documents',
+                text: 'Send an automated email requesting additional documents?',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#F59E0B',
+                confirmButtonText: 'Yes, Send Request'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/company/application/${appId}/request-documents`, {
+                        method: 'POST',
+                        headers: getHeaders()
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) {
+                            Swal.fire('Sent!', 'Document request sent.', 'success');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

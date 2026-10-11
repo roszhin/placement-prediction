@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Roshin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <link href="/css/app-dialog.css" rel="stylesheet">
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/app-dialog.js"></script>
+    <script src="/js/loader.js"></script>
+    <style>
+        .profile-img-preview { width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 3px solid var(--text-color); }
+        
+        /* Floating Unsaved Changes Bar */
+        .unsaved-bar-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            width: 90%;
+            max-width: 650px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 50px;
+            padding: 12px 24px;
+            z-index: 1040;
+            box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(245, 158, 11, 0.15);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .unsaved-bar-container.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .unsaved-indicator-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #F59E0B;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+            animation: pulse-dot 1.8s infinite;
+        }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        @media (max-width: 576px) {
+            .unsaved-bar-container {
+                bottom: 16px;
+                width: 95%;
+                padding: 10px 16px;
+                border-radius: 24px;
+            }
+            .mobile-hide-text {
+                display: none !important;
+            }
+        }
+
+        /* Skill Chips */
+        .skill-chip {
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            color: #1E293B;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .skill-chip:hover {
+            border-color: #CBD5E1;
+            background-color: #F1F5F9;
+        }
+        .skill-chip .remove-chip-btn {
+            color: #94A3B8;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: color 0.15s ease;
+        }
+        .skill-chip .remove-chip-btn:hover {
+            color: #EF4444;
+        }
+        .suggest-pill {
+            cursor: pointer;
+            font-size: 0.75rem;
+            background: rgba(245, 158, 11, 0.08);
+            color: #D97706;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            border-radius: 12px;
+            padding: 3px 10px;
+            transition: all 0.15s ease;
+        }
+        .suggest-pill:hover {
+            background: #F59E0B;
+            color: #FFFFFF;
+            border-color: #F59E0B;
+        }
+
+        /* Dynamic Item Cards */
+        .dynamic-entry-card {
+            background: #FAFAFA;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .dynamic-entry-card:hover {
+            border-color: #D1D5DB;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+        .dynamic-entry-card .entry-remove-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            color: #9CA3AF;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+            transition: color 0.15s ease;
+        }
+        .dynamic-entry-card .entry-remove-btn:hover {
+            color: #EF4444;
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="profile">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+
+                <div class="dashboard-container container py-4">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-10 col-xl-9">
+                            <div class="corporate-card">
+                                
+                                <!-- Card Header with Title and Quick Save Button -->
+                                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 flex-wrap gap-2">
+                                    <h3 class="fw-bold m-0"><i class="fa-solid fa-user-pen me-2" style="color: var(--text-color);"></i>Edit Profile</h3>
+                                    <button type="button" id="btnHeaderSave" class="btn text-white rounded-pill px-4 py-2 fw-semibold shadow-sm" style="background: #F59E0B; display: none; transition: all 0.2s ease;">
+                                        <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                                    </button>
+                                </div>
+                                
+                                <!-- Alert Container for Fallback Notifications -->
+                                <div class="position-fixed w-100" style="top: 20px; left: 0; z-index: 1050; display: none; padding: 0 20px;" id="toastContainer">
+                                    <div class="alert text-center py-2 shadow-lg mx-auto" style="max-width: 500px; border-radius: 12px; font-weight: 500;" id="toastMessage"></div>
+                                </div>
+
+                                <div th:if="${success}" class="alert alert-success border-success text-success" th:text="${success}"></div>
+                                <div th:if="${error}" class="alert alert-danger border-danger text-danger" th:text="${error}"></div>
+
+                                <!-- Profile Picture Upload Section -->
+                                <div class="mb-4 text-center pb-3 border-bottom">
+                                    <div class="profile-picture-container position-relative mx-auto mb-3" style="width: 140px; height: 140px; border-radius: 50%; border: 3px solid #F59E0B; background-color: #F9FAFB; display: flex; align-items: center; justify-content: center; overflow: hidden;" id="dropZone">
+                                        <img th:if="${student.profilePicture != null}" th:src="${student.profilePicture}" id="profileImgPreview" style="width: 100%; height: 100%; object-fit: cover;" alt="Profile Picture">
+                                        <span th:if="${student.profilePicture == null}" id="profileImgInitial" style="font-size: 3rem; font-weight: bold; color: #F59E0B;" th:text="${#strings.substring(student.name, 0, 1)}">U</span>
+                                        
+                                        <div class="drag-overlay position-absolute w-100 h-100 d-none align-items-center justify-content-center" style="background: rgba(245,158,11,0.8); top: 0; left: 0; z-index: 10;">
+                                            <i class="fa-solid fa-cloud-arrow-up text-white fs-2"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-center gap-3 mb-2 align-items-center">
+                                        <label for="profileUploadInput" class="btn text-white rounded-pill shadow-sm m-0" style="background-color: #F59E0B; height: 48px; padding: 0 24px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 500; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#d97706'; this.style.transform='translateY(-1px)';" onmouseout="this.style.backgroundColor='#F59E0B'; this.style.transform='none';">
+                                            <i class="fa-solid fa-camera me-2 text-white"></i> Upload Image
+                                        </label>
+                                        <input type="file" id="profileUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg, image/webp">
+                                        
+                                        <button type="button" class="btn btn-outline-danger rounded-pill px-4 m-0" id="btnRemovePicture" th:classappend="${student.profilePicture == null} ? 'd-none' : ''" style="height: 48px; display: inline-flex; align-items: center; justify-content: center; font-weight: 500;">
+                                            <i class="fa-solid fa-trash me-2"></i> Remove
+                                        </button>
+                                    </div>
+                                    <div class="text-muted small">Max size: 5MB (JPG, PNG, WEBP). Auto-crops to square.</div>
+                                    <div id="uploadStatus" class="small mt-2 fw-medium"></div>
+                                </div>
+
+                                <!-- Main Profile Form -->
+                                <form id="profileForm" th:action="@{/student/profile/update}" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                                    <!-- Section 1: Personal & Contact Details -->
+                                    <h5 class="mb-3 border-bottom pb-2" style="color: var(--text-color);"><i class="fa-solid fa-id-card me-2" style="color: #F59E0B;"></i>Personal & Contact Details</h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Full Name <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control glass-input-premium" name="name" th:value="${student.name}" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Email (Read-only)</label>
+                                            <input type="email" class="form-control glass-input-premium" th:value="${student.email}" readonly disabled>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Phone Number</label>
+                                            <input type="tel" class="form-control glass-input-premium" name="phoneNumber" th:value="${student.phoneNumber}" placeholder="e.g. 9876543210">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Roll Number</label>
+                                            <input type="text" class="form-control glass-input-premium" name="rollNumber" th:value="${student.rollNumber}" placeholder="e.g. 21CS042">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Date of Birth</label>
+                                            <input type="date" class="form-control glass-input-premium" name="dateOfBirth" th:value="${student.dateOfBirth}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Gender</label>
+                                            <select class="form-select glass-input-premium" name="gender">
+                                                <option value="" th:selected="${student.gender == null || student.gender == ''}">Select Gender</option>
+                                                <option value="Male" th:selected="${student.gender == 'Male'}">Male</option>
+                                                <option value="Female" th:selected="${student.gender == 'Female'}">Female</option>
+                                                <option value="Other" th:selected="${student.gender == 'Other'}">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Address</label>
+                                        <textarea class="form-control glass-input-premium" name="address" rows="2" th:text="${student.address}" placeholder="Street, City, State, Pincode"></textarea>
+                                    </div>
+
+                                    <!-- Section 2: Academic Details -->
+                                    <h5 class="mt-4 mb-3 border-bottom pb-2" style="color: var(--text-color);"><i class="fa-solid fa-graduation-cap me-2" style="color: #F59E0B;"></i>Academic Details</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Degree Level / Course</label>
+                                            <input type="text" class="form-control glass-input-premium" name="course" list="courseList" th:value="${student.course}" placeholder="e.g. B.Tech, MCA, BCA, UG, PG">
+                                            <datalist id="courseList">
+                                                <option value="B.Tech">
+                                                <option value="B.E.">
+                                                <option value="BCA">
+                                                <option value="MCA">
+                                                <option value="B.Sc">
+                                                <option value="M.Sc">
+                                                <option value="M.Tech">
+                                                <option value="MBA">
+                                                <option value="UG">
+                                                <option value="PG">
+                                                <option value="PhD">
+                                            </datalist>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Department</label>
+                                            <input type="text" class="form-control glass-input-premium" name="department" list="departmentList" th:value="${student.department}" placeholder="e.g. Computer Science, Information Technology">
+                                            <datalist id="departmentList">
+                                                <option value="Computer Science">
+                                                <option value="Computer Applications">
+                                                <option value="Computer Application">
+                                                <option value="Information Technology">
+                                                <option value="Data Science">
+                                                <option value="Artificial Intelligence">
+                                                <option value="Electronics & Communication">
+                                                <option value="Mechanical Engineering">
+                                                <option value="Civil Engineering">
+                                                <option value="Bio Technology">
+                                                <option value="Physics">
+                                                <option value="Chemistry">
+                                                <option value="Mathematics">
+                                                <option value="Tamil">
+                                                <option value="Zoology">
+                                                <option value="Physical Education">
+                                            </datalist>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">College / Institute</label>
+                                            <input type="text" class="form-control glass-input-premium" name="college" th:value="${student.college}" placeholder="e.g. National Institute of Technology">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">University</label>
+                                            <input type="text" class="form-control glass-input-premium" name="university" th:value="${student.university}" placeholder="e.g. State Technical University">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">Passing Year</label>
+                                            <input type="text" class="form-control glass-input-premium" name="passingYear" th:value="${student.passingYear}" placeholder="e.g. 2026">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted">CGPA (Out of 10)</label>
+                                            <input type="number" step="0.01" min="0" max="10" class="form-control glass-input-premium" name="cgpa" th:value="${student.cgpa}" placeholder="e.g. 8.75">
+                                        </div>
+                                    </div>
+
+                                    <!-- Section 3: Technical Skills (Interactive Chips) -->
+                                    <h5 class="mt-4 mb-3 border-bottom pb-2" style="color: var(--text-color);"><i class="fa-solid fa-code me-2" style="color: #F59E0B;"></i>Technical Skills</h5>
+                                    <input type="hidden" name="technicalSkills" id="technicalSkillsInput" th:value="${student.technicalSkills}">
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">Add skills to help our AI engine match you with top job openings:</label>
+                                        
+                                        <!-- Chips Container -->
+                                        <div id="skillsChipsContainer" class="d-flex flex-wrap gap-2 p-3 bg-light rounded-3 border mb-2" style="min-height: 54px;">
+                                            <!-- Dynamically populated chips -->
+                                        </div>
+                                        
+                                        <!-- Skill Input & Add Button -->
+                                        <div class="input-group mb-2">
+                                            <input type="text" id="skillInput" class="form-control glass-input-premium" placeholder="Type a skill (e.g. Java, Docker, React) and press Enter...">
+                                            <button type="button" id="btnAddSkill" class="btn btn-outline-warning text-dark fw-medium px-4" style="border-color: #F59E0B;">
+                                                <i class="fa-solid fa-plus me-1" style="color: #F59E0B;"></i> Add Skill
+                                            </button>
+                                        </div>
+
+                                        <!-- Quick Suggestion Pills -->
+                                        <div class="d-flex flex-wrap align-items-center gap-1 mt-2">
+                                            <span class="text-muted small me-1">Popular:</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('Java')">Java</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('Python')">Python</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('Spring Boot')">Spring Boot</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('React')">React</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('SQL')">SQL</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('Docker')">Docker</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('AWS')">AWS</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('Git')">Git</span>
+                                            <span class="suggest-pill" onclick="addSuggestedSkill('REST APIs')">REST APIs</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Section 4: Certifications (Dynamic Add/Remove Entries) -->
+                                    <h5 class="mt-4 mb-3 border-bottom pb-2" style="color: var(--text-color);"><i class="fa-solid fa-certificate me-2" style="color: #F59E0B;"></i>Certifications</h5>
+                                    <input type="hidden" name="certifications" id="certificationsInput" th:value="${student.certifications}">
+                                    
+                                    <div class="mb-3">
+                                        <div id="certificationsList">
+                                            <!-- Dynamically populated certification entries -->
+                                        </div>
+                                        <button type="button" id="btnAddCertification" class="btn btn-outline-secondary btn-sm rounded-pill px-3 mt-1 fw-medium">
+                                            <i class="fa-solid fa-plus me-1 text-warning"></i> Add Certification
+                                        </button>
+                                    </div>
+
+                                    <!-- Section 5: Internships & Work Experience (Dynamic Entries) -->
+                                    <h5 class="mt-4 mb-3 border-bottom pb-2" style="color: var(--text-color);"><i class="fa-solid fa-briefcase me-2" style="color: #F59E0B;"></i>Internships & Experience</h5>
+                                    <input type="hidden" name="experience" id="experienceInput" th:value="${student.experience}">
+                                    
+                                    <div class="mb-3">
+                                        <div id="experienceList">
+                                            <!-- Dynamically populated experience cards -->
+                                        </div>
+                                        <button type="button" id="btnAddExperience" class="btn btn-outline-secondary btn-sm rounded-pill px-3 mt-1 fw-medium">
+                                            <i class="fa-solid fa-plus me-1 text-warning"></i> Add Experience
+                                        </button>
+                                    </div>
+
+                                    <!-- Section 6: Projects (Dynamic Entries) -->
+                                    <h5 class="mt-4 mb-3 border-bottom pb-2" style="color: var(--text-color);"><i class="fa-solid fa-laptop-code me-2" style="color: #F59E0B;"></i>Projects</h5>
+                                    <input type="hidden" name="projects" id="projectsInput" th:value="${student.projects}">
+                                    
+                                    <div class="mb-3">
+                                        <div id="projectsList">
+                                            <!-- Dynamically populated project cards -->
+                                        </div>
+                                        <button type="button" id="btnAddProject" class="btn btn-outline-secondary btn-sm rounded-pill px-3 mt-1 fw-medium">
+                                            <i class="fa-solid fa-plus me-1 text-warning"></i> Add Project
+                                        </button>
+                                    </div>
+
+                                    <!-- Section 7: Resume & AI Profile Analysis -->
+                                    <h5 class="mt-4 mb-4 border-bottom pb-2" style="color: var(--text-color);"><i class="fa-solid fa-file-lines me-2" style="color: #F59E0B;"></i>Resume & AI Profile Analysis</h5>
+                                    
+                                    <!-- Premium Resume Upload Card -->
+                                    <div class="mb-4 bg-white rounded-4 p-4 shadow-sm" style="border: 1px solid var(--border-color); position: relative; overflow: hidden;">
+                                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary-color);"></div>
+                                        
+                                        <div class="d-flex align-items-center mb-4">
+                                            <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-3 me-3" style="width: 48px; height: 48px;">
+                                                <i class="fa-solid fa-file-pdf fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold mb-1">Upload Resume (PDF)</h6>
+                                                <p class="text-muted small mb-0">Our AI engine automatically matches your resume against job openings and generates ATS scoring.</p>
+                                            </div>
+                                        </div>
+
+                                        <div id="resumeDropZone" class="p-4 rounded-3 text-center" style="border: 2px dashed rgba(245, 158, 11, 0.3); background-color: rgba(245, 158, 11, 0.02); transition: all 0.3s ease;">
+                                            <i class="fa-solid fa-cloud-arrow-up text-primary fs-2 mb-3"></i>
+                                            <h6 class="fw-bold">Drag & Drop or Browse</h6>
+                                            <p class="text-muted small mb-3">PDF format only (Max: 10MB)</p>
+                                            <input type="file" class="form-control d-none" id="resumeUploadInput" name="resumeFile" accept="application/pdf">
+                                            <div class="d-flex justify-content-center gap-2 flex-wrap align-items-center">
+                                                <label for="resumeUploadInput" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-medium m-0" style="cursor: pointer;">
+                                                    <i class="fa-solid fa-folder-open me-1"></i> Select PDF File
+                                                </label>
+                                                <button type="button" id="btnUploadResumeNow" class="btn text-white rounded-pill px-4 py-2 fw-medium shadow-sm d-none" style="background-color: #F59E0B;">
+                                                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload & Replace Resume Now
+                                                </button>
+                                            </div>
+                                            <div id="fileNameDisplay" class="text-primary small mt-3 fw-medium"></div>
+                                            <div id="resumeUploadStatus" class="small mt-2 fw-medium"></div>
+                                        </div>
+
+                                        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div id="currentResumeBadgeContainer">
+                                                <div th:if="${latestResume != null}" id="currentResumeBadge" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2">
+                                                    <i class="fa-solid fa-check-circle me-1"></i> Current: <span th:text="${latestResume.fileName}">Resume.pdf</span>
+                                                </div>
+                                                <div th:if="${latestResume == null}" id="currentResumeBadge" class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-2">
+                                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> No Resume Uploaded
+                                                </div>
+                                            </div>
+                                            
+                                            <div th:if="${latestResume != null}" id="resumeDownloadContainer" class="d-flex gap-2">
+                                                <a th:href="@{/student/resume/{id}/view(id=${latestResume.id})}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-medium"><i class="fa-solid fa-eye me-1"></i> View</a>
+                                                <a th:href="@{/student/resume/{id}/download(id=${latestResume.id})}" class="btn btn-sm btn-light border rounded-pill px-3 text-muted fw-medium"><i class="fa-solid fa-download me-1"></i> Download</a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- In-Card Action Buttons -->
+                                    <div class="text-end mt-4 d-flex justify-content-end gap-2 align-items-center">
+                                        <button type="button" id="btnCardDiscard" class="btn btn-outline-secondary rounded-pill px-4 py-2 d-none fw-medium">
+                                            <i class="fa-solid fa-rotate-left me-1"></i> Discard
+                                        </button>
+                                        <button type="button" id="btnCardSave" class="btn-premium border-0" style="padding: 10px 30px; background: var(--text-color); color: var(--bg-color); opacity: 0.5; pointer-events: none; transition: all 0.3s ease;" disabled>
+                                            <i class="fa-solid fa-floppy-disk me-2"></i> Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Responsive Bottom Bar for Unsaved Changes -->
+    <div id="unsavedChangesBar" class="unsaved-bar-container shadow-lg">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="unsaved-indicator-dot"></span>
+                <span class="fw-semibold text-dark mobile-hide-text">You have unsaved changes</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <button type="button" id="btnFloatingDiscard" class="btn btn-light rounded-pill px-3 py-2 btn-sm fw-medium border text-muted">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Discard
+                </button>
+                <button type="button" id="btnFloatingSave" class="btn text-white rounded-pill px-4 py-2 btn-sm fw-semibold shadow-sm" style="background: #F59E0B; transition: all 0.2s ease;">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        // Global Constants & State
+        const roleBaseUrl = '/student';
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+        
+        let initialFormState = '';
+        let isDirty = false;
+        
+        // Initial Raw Dynamic Data from Server
+        const initialRawSkills = /*[[${student.technicalSkills}]]*/ '';
+        const initialRawCerts = /*[[${student.certifications}]]*/ '';
+        const initialRawExp = /*[[${student.experience}]]*/ '';
+        const initialRawProj = /*[[${student.projects}]]*/ '';
+
+        // Form & Button Elements
+        const form = document.getElementById('profileForm');
+        const btnHeaderSave = document.getElementById('btnHeaderSave');
+        const btnCardSave = document.getElementById('btnCardSave');
+        const btnCardDiscard = document.getElementById('btnCardDiscard');
+        const btnFloatingSave = document.getElementById('btnFloatingSave');
+        const btnFloatingDiscard = document.getElementById('btnFloatingDiscard');
+        const unsavedChangesBar = document.getElementById('unsavedChangesBar');
+
+        // Skills State
+        let currentSkills = [];
+
+        // ==========================================
+        // 1. DYNAMIC FIELDS INITIALIZATION & HELPERS
+        // ==========================================
+
+        function initSkills(raw) {
+            currentSkills = [];
+            if (raw && typeof raw === 'string') {
+                raw.split(',').forEach(s => {
+                    const trimmed = s.trim();
+                    if (trimmed && !currentSkills.some(x => x.toLowerCase() === trimmed.toLowerCase())) {
+                        currentSkills.push(trimmed);
+                    }
+                });
+            }
+            renderSkills();
+        }
+
+        function renderSkills() {
+            const container = document.getElementById('skillsChipsContainer');
+            container.innerHTML = '';
+            if (currentSkills.length === 0) {
+                container.innerHTML = '<span class="text-muted small fst-italic py-1">No skills added yet. Type a skill below or pick from recommendations.</span>';
+                return;
+            }
+            currentSkills.forEach((skill, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'skill-chip';
+                chip.innerHTML = `
+                    <span class="skill-chip-text">${escapeHtml(skill)}</span>
+                    <i class="fa-solid fa-xmark remove-chip-btn" data-index="${index}" title="Remove skill"></i>
+                `;
+                container.appendChild(chip);
+            });
+        }
+
+        function addSkill(skillName) {
+            const trimmed = skillName.trim();
+            if (!trimmed) return;
+            if (!currentSkills.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+                currentSkills.push(trimmed);
+                renderSkills();
+                syncDynamicFields();
+                checkDirty();
+            }
+        }
+
+        function removeSkill(index) {
+            if (index >= 0 && index < currentSkills.length) {
+                currentSkills.splice(index, 1);
+                renderSkills();
+                syncDynamicFields();
+                checkDirty();
+            }
+        }
+
+        window.addSuggestedSkill = function(skillName) {
+            addSkill(skillName);
+        };
+
+        // Certifications
+        function initCertifications(raw) {
+            const list = document.getElementById('certificationsList');
+            list.innerHTML = '';
+            let certs = [];
+            if (raw && typeof raw === 'string') {
+                certs = raw.split(/\r?\n/).map(c => c.trim()).filter(Boolean);
+            }
+            if (certs.length === 0) {
+                addCertRow('');
+            } else {
+                certs.forEach(cert => addCertRow(cert));
+            }
+        }
+
+        function addCertRow(val = '') {
+            const list = document.getElementById('certificationsList');
+            const row = document.createElement('div');
+            row.className = 'cert-entry d-flex gap-2 align-items-center mb-2';
+            row.innerHTML = `
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-certificate" style="color: #F59E0B;"></i></span>
+                    <input type="text" class="form-control glass-input-premium border-start-0 cert-item-input" placeholder="e.g. AWS Certified Solutions Architect (2024)" value="${escapeHtml(val)}">
+                </div>
+                <button type="button" class="btn btn-outline-danger rounded-3 remove-cert-btn" title="Remove" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            list.appendChild(row);
+        }
+
+        // Internships / Experience
+        function initExperience(raw) {
+            const list = document.getElementById('experienceList');
+            list.innerHTML = '';
+            let entries = [];
+            if (raw && typeof raw === 'string') {
+                entries = raw.split(/\n\s*\n/).map(e => e.trim()).filter(Boolean);
+            }
+            if (entries.length === 0) {
+                addExperienceCard('', '', '');
+            } else {
+                entries.forEach(entry => {
+                    const lines = entry.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                    let role = '', company = '', desc = '';
+                    let descLines = [];
+                    let hasLabels = false;
+
+                    lines.forEach(l => {
+                        if (/^role:\s*/i.test(l)) {
+                            role = l.replace(/^role:\s*/i, '').trim();
+                            hasLabels = true;
+                        } else if (/^(organization|company|duration):\s*/i.test(l)) {
+                            company = l.replace(/^(organization|company|duration):\s*/i, '').trim();
+                            hasLabels = true;
+                        } else if (/^description:\s*/i.test(l)) {
+                            descLines.push(l.replace(/^description:\s*/i, '').trim());
+                            hasLabels = true;
+                        } else if (hasLabels && descLines.length > 0) {
+                            descLines.push(l);
+                        }
+                    });
+
+                    if (hasLabels) {
+                        desc = descLines.join('\n');
+                    } else {
+                        role = lines[0] || '';
+                        company = lines[1] || '';
+                        desc = lines.slice(2).join('\n');
+                    }
+                    addExperienceCard(role, company, desc);
+                });
+            }
+        }
+
+        function addExperienceCard(role = '', company = '', desc = '') {
+            const list = document.getElementById('experienceList');
+            const card = document.createElement('div');
+            card.className = 'dynamic-entry-card exp-card';
+            card.innerHTML = `
+                <button type="button" class="entry-remove-btn remove-exp-btn" title="Remove experience"><i class="fa-solid fa-trash-can"></i></button>
+                <div class="row g-2 pe-4">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label small text-muted mb-1">Role / Position</label>
+                        <input type="text" class="form-control form-control-sm glass-input-premium exp-role" placeholder="e.g. Software Development Intern" value="${escapeHtml(role)}">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label small text-muted mb-1">Organization / Duration</label>
+                        <input type="text" class="form-control form-control-sm glass-input-premium exp-company" placeholder="e.g. Infosys (6 Months)" value="${escapeHtml(company)}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1">Key Responsibilities / Impact</label>
+                        <textarea class="form-control form-control-sm glass-input-premium exp-desc" rows="2" placeholder="Briefly describe what you built or learned...">${escapeHtml(desc)}</textarea>
+                    </div>
+                </div>
+            `;
+            list.appendChild(card);
+        }
+
+        // Projects
+        function initProjects(raw) {
+            const list = document.getElementById('projectsList');
+            list.innerHTML = '';
+            let entries = [];
+            if (raw && typeof raw === 'string') {
+                entries = raw.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+            }
+            if (entries.length === 0) {
+                addProjectCard('', '', '');
+            } else {
+                entries.forEach(entry => {
+                    const lines = entry.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                    let title = '', tech = '', desc = '';
+                    let descLines = [];
+                    let hasLabels = false;
+
+                    lines.forEach(l => {
+                        if (/^project:\s*/i.test(l)) {
+                            title = l.replace(/^project:\s*/i, '').trim();
+                            hasLabels = true;
+                        } else if (/^(technologies|technology|tech|tech stack):\s*/i.test(l)) {
+                            tech = l.replace(/^(technologies|technology|tech|tech stack):\s*/i, '').trim();
+                            hasLabels = true;
+                        } else if (/^description:\s*/i.test(l)) {
+                            descLines.push(l.replace(/^description:\s*/i, '').trim());
+                            hasLabels = true;
+                        } else if (hasLabels && descLines.length > 0) {
+                            descLines.push(l);
+                        }
+                    });
+
+                    if (hasLabels) {
+                        desc = descLines.join('\n');
+                    } else {
+                        title = lines[0] || '';
+                        tech = lines[1] || '';
+                        desc = lines.slice(2).join('\n');
+                    }
+                    addProjectCard(title, tech, desc);
+                });
+            }
+        }
+
+        function addProjectCard(title = '', tech = '', desc = '') {
+            const list = document.getElementById('projectsList');
+            const card = document.createElement('div');
+            card.className = 'dynamic-entry-card proj-card';
+            card.innerHTML = `
+                <button type="button" class="entry-remove-btn remove-proj-btn" title="Remove project"><i class="fa-solid fa-trash-can"></i></button>
+                <div class="row g-2 pe-4">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label small text-muted mb-1">Project Name</label>
+                        <input type="text" class="form-control form-control-sm glass-input-premium proj-title" placeholder="e.g. AI Placement Platform" value="${escapeHtml(title)}">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label small text-muted mb-1">Tech Stack</label>
+                        <input type="text" class="form-control form-control-sm glass-input-premium proj-tech" placeholder="e.g. Spring Boot, React, MySQL" value="${escapeHtml(tech)}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1">Project Description / Link</label>
+                        <textarea class="form-control form-control-sm glass-input-premium proj-desc" rows="2" placeholder="Describe the goal and features of your project...">${escapeHtml(desc)}</textarea>
+                    </div>
+                </div>
+            `;
+            list.appendChild(card);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function (m) {
+                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[m];
+            });
+        }
+
+        // ==========================================
+        // 2. SYNCHRONIZATION & STATE SNAPSHOTTING
+        // ==========================================
+
+        function syncDynamicFields() {
+            // Sync Skills
+            const skillsInput = document.getElementById('technicalSkillsInput');
+            if (skillsInput) skillsInput.value = currentSkills.join(', ');
+
+            // Sync Certifications
+            const certVals = Array.from(document.querySelectorAll('.cert-item-input'))
+                .map(el => el.value.trim())
+                .filter(Boolean);
+            const certsInput = document.getElementById('certificationsInput');
+            if (certsInput) certsInput.value = certVals.join('\n');
+
+            // Sync Experience
+            const expEntries = Array.from(document.querySelectorAll('.exp-card')).map(card => {
+                const r = card.querySelector('.exp-role')?.value.trim() || '';
+                const c = card.querySelector('.exp-company')?.value.trim() || '';
+                const d = card.querySelector('.exp-desc')?.value.trim() || '';
+                if (!r && !c && !d) return '';
+                const lines = [];
+                if (r) lines.push('Role: ' + r);
+                if (c) lines.push('Organization: ' + c);
+                if (d) lines.push('Description: ' + d);
+                return lines.join('\n');
+            }).filter(Boolean);
+            const expInput = document.getElementById('experienceInput');
+            if (expInput) expInput.value = expEntries.join('\n\n');
+
+            // Sync Projects
+            const projEntries = Array.from(document.querySelectorAll('.proj-card')).map(card => {
+                const t = card.querySelector('.proj-title')?.value.trim() || '';
+                const k = card.querySelector('.proj-tech')?.value.trim() || '';
+                const d = card.querySelector('.proj-desc')?.value.trim() || '';
+                if (!t && !k && !d) return '';
+                const lines = [];
+                if (t) lines.push('Project: ' + t);
+                if (k) lines.push('Technologies: ' + k);
+                if (d) lines.push('Description: ' + d);
+                return lines.join('\n');
+            }).filter(Boolean);
+            const projInput = document.getElementById('projectsInput');
+            if (projInput) projInput.value = projEntries.join('\n\n');
+        }
+
+        function getFormState() {
+            return {
+                name: document.querySelector('[name="name"]')?.value.trim() || '',
+                phoneNumber: document.querySelector('[name="phoneNumber"]')?.value.trim() || '',
+                rollNumber: document.querySelector('[name="rollNumber"]')?.value.trim() || '',
+                dateOfBirth: document.querySelector('[name="dateOfBirth"]')?.value || '',
+                gender: document.querySelector('[name="gender"]')?.value || '',
+                address: document.querySelector('[name="address"]')?.value.trim() || '',
+                course: document.querySelector('[name="course"]')?.value.trim() || '',
+                department: document.querySelector('[name="department"]')?.value.trim() || '',
+                college: document.querySelector('[name="college"]')?.value.trim() || '',
+                university: document.querySelector('[name="university"]')?.value.trim() || '',
+                passingYear: document.querySelector('[name="passingYear"]')?.value.trim() || '',
+                cgpa: document.querySelector('[name="cgpa"]')?.value.trim() || '',
+                skills: [...currentSkills].map(s => s.toLowerCase()).sort().join(','),
+                pendingSkill: document.getElementById('skillInput')?.value.trim() || '',
+                certifications: Array.from(document.querySelectorAll('.cert-item-input'))
+                    .map(el => el.value.trim()).filter(Boolean).join('|'),
+                experience: Array.from(document.querySelectorAll('.exp-card')).map(card => {
+                    return (card.querySelector('.exp-role')?.value.trim() || '') + ':' +
+                           (card.querySelector('.exp-company')?.value.trim() || '') + ':' +
+                           (card.querySelector('.exp-desc')?.value.trim() || '');
+                }).join('|'),
+                projects: Array.from(document.querySelectorAll('.proj-card')).map(card => {
+                    return (card.querySelector('.proj-title')?.value.trim() || '') + ':' +
+                           (card.querySelector('.proj-tech')?.value.trim() || '') + ':' +
+                           (card.querySelector('.proj-desc')?.value.trim() || '');
+                }).join('|'),
+                resumeFileSelected: (document.getElementById('resumeUploadInput')?.files?.length || 0) > 0
+            };
+        }
+
+        // ==========================================
+        // 3. DIRTY CHECKING & SAVE BUTTON TOGGLE
+        // ==========================================
+
+        function checkDirty() {
+            const currentState = JSON.stringify(getFormState());
+            const dirty = (currentState !== initialFormState);
+            isDirty = dirty;
+
+            if (dirty) {
+                // Show floating bar
+                unsavedChangesBar.classList.add('visible');
+                
+                // Show header save button
+                if (btnHeaderSave) btnHeaderSave.style.display = 'inline-flex';
+                
+                // Enable card buttons
+                btnCardSave.disabled = false;
+                btnCardSave.style.opacity = '1';
+                btnCardSave.style.pointerEvents = 'auto';
+                btnCardSave.style.cursor = 'pointer';
+                btnCardDiscard.classList.remove('d-none');
+            } else {
+                // Hide floating bar
+                unsavedChangesBar.classList.remove('visible');
+                
+                // Hide header save button
+                if (btnHeaderSave) btnHeaderSave.style.display = 'none';
+                
+                // Disable card buttons
+                btnCardSave.disabled = true;
+                btnCardSave.style.opacity = '0.5';
+                btnCardSave.style.pointerEvents = 'none';
+                btnCardSave.style.cursor = 'default';
+                btnCardDiscard.classList.add('d-none');
+            }
+
+            return dirty;
+        }
+
+        function setSaveButtonsLoading(isLoading) {
+            const buttons = [btnHeaderSave, btnFloatingSave, btnCardSave].filter(Boolean);
+            buttons.forEach(btn => {
+                btn.disabled = isLoading;
+                if (isLoading) {
+                    btn.setAttribute('data-orig-html', btn.innerHTML);
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Saving...';
+                } else {
+                    const orig = btn.getAttribute('data-orig-html');
+                    if (orig) btn.innerHTML = orig;
+                }
+            });
+        }
+
+        // ==========================================
+        // 4. SUBMIT / SAVE PROFILE ACTION
+        // ==========================================
+
+        async function saveProfile(e) {
+            if (e) e.preventDefault();
+
+            // Auto-commit any text typed into skill input
+            const skillInput = document.getElementById('skillInput');
+            if (skillInput && skillInput.value.trim()) {
+                addSkill(skillInput.value);
+                skillInput.value = '';
+            }
+
+            if (!isDirty) return true; // Already clean
+
+            if (!form.checkValidity()) {
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalid.focus();
+                }
+                form.reportValidity();
+                if (window.AppToast) AppToast.error('Please check your entries. A required field is missing or invalid.');
+                return false;
+            }
+
+            setSaveButtonsLoading(true);
+            syncDynamicFields();
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        [csrfHeader]: csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                let result = {};
+                try {
+                    result = await response.json();
+                } catch (err) {}
+
+                if (response.ok && (result.success || result.success === undefined)) {
+                    // Update resume badge if file was uploaded
+                    if (result.resumeFileName) {
+                        const badgeContainer = document.getElementById('currentResumeBadgeContainer');
+                        if (badgeContainer) {
+                            badgeContainer.innerHTML = `
+                                <div id="currentResumeBadge" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2">
+                                    <i class="fa-solid fa-check-circle me-1"></i> Current: <span>${escapeHtml(result.resumeFileName)}</span>
+                                </div>
+                            `;
+                        }
+                        if (result.resumeId) {
+                            const downloadContainer = document.getElementById('resumeDownloadContainer');
+                            if (downloadContainer) {
+                                downloadContainer.innerHTML = `
+                                    <a href="/student/resume/${result.resumeId}/view" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-medium"><i class="fa-solid fa-eye me-1"></i> View</a>
+                                    <a href="/student/resume/${result.resumeId}/download" class="btn btn-sm btn-light border rounded-pill px-3 text-muted fw-medium"><i class="fa-solid fa-download me-1"></i> Download</a>
+                                `;
+                            }
+                        }
+                        const resumeInput = document.getElementById('resumeUploadInput');
+                        if (resumeInput) resumeInput.value = '';
+                        const nameDisplay = document.getElementById('fileNameDisplay');
+                        if (nameDisplay) nameDisplay.textContent = '';
+                        const uploadBtn = document.getElementById('btnUploadResumeNow');
+                        if (uploadBtn) uploadBtn.classList.add('d-none');
+                        const uploadStatus = document.getElementById('resumeUploadStatus');
+                        if (uploadStatus) uploadStatus.innerHTML = '';
+                    }
+
+                    // Reset baseline state
+                    initialFormState = JSON.stringify(getFormState());
+                    checkDirty();
+                    setSaveButtonsLoading(false);
+
+                    const msg = result.message || 'Profile updated successfully!';
+                    if (window.AppToast) {
+                        AppToast.success(msg);
+                    } else {
+                        showToast(msg);
+                    }
+                    return true;
+                } else {
+                    const errorMsg = result.message || 'Failed to save changes. Please try again.';
+                    if (window.AppToast) {
+                        AppToast.error(errorMsg);
+                    } else {
+                        showToast(errorMsg, true);
+                    }
+                    setSaveButtonsLoading(false);
+                    return false;
+                }
+            } catch (err) {
+                console.error('Save error:', err);
+                const errorMsg = 'Network error while saving profile: ' + err.message;
+                if (window.AppToast) {
+                    AppToast.error(errorMsg);
+                } else {
+                    showToast(errorMsg, true);
+                }
+                setSaveButtonsLoading(false);
+                return false;
+            }
+        }
+
+        // ==========================================
+        // 5. DISCARD CHANGES ACTION
+        // ==========================================
+
+        async function discardChanges() {
+            if (!isDirty) return;
+
+            const confirmed = await AppDialog.confirm({
+                title: 'Discard Unsaved Changes?',
+                message: 'Are you sure you want to discard your unsaved edits?',
+                details: 'All fields will be reverted to your last saved profile state.',
+                confirmText: 'Discard Edits',
+                cancelText: 'Keep Editing',
+                type: 'warning',
+                icon: 'rotate-left'
+            });
+
+            if (!confirmed) return;
+
+            // Revert basic form fields
+            const state = JSON.parse(initialFormState);
+            const nameEl = document.querySelector('[name="name"]'); if (nameEl) nameEl.value = state.name;
+            const phoneEl = document.querySelector('[name="phoneNumber"]'); if (phoneEl) phoneEl.value = state.phoneNumber;
+            const rollEl = document.querySelector('[name="rollNumber"]'); if (rollEl) rollEl.value = state.rollNumber;
+            const dobEl = document.querySelector('[name="dateOfBirth"]'); if (dobEl) dobEl.value = state.dateOfBirth;
+            const genderEl = document.querySelector('[name="gender"]'); if (genderEl) genderEl.value = state.gender;
+            const addrEl = document.querySelector('[name="address"]'); if (addrEl) addrEl.value = state.address;
+            const courseEl = document.querySelector('[name="course"]'); if (courseEl) courseEl.value = state.course;
+            const deptEl = document.querySelector('[name="department"]'); if (deptEl) deptEl.value = state.department;
+            const collEl = document.querySelector('[name="college"]'); if (collEl) collEl.value = state.college;
+            const univEl = document.querySelector('[name="university"]'); if (univEl) univEl.value = state.university;
+            const passEl = document.querySelector('[name="passingYear"]'); if (passEl) passEl.value = state.passingYear;
+            const cgpaEl = document.querySelector('[name="cgpa"]'); if (cgpaEl) cgpaEl.value = state.cgpa;
+
+            // Revert dynamic fields
+            initSkills(initialRawSkills);
+            initCertifications(initialRawCerts);
+            initExperience(initialRawExp);
+            initProjects(initialRawProj);
+
+            // Revert resume upload selection
+            const resumeInput = document.getElementById('resumeUploadInput');
+            if (resumeInput) resumeInput.value = '';
+            const nameDisplay = document.getElementById('fileNameDisplay');
+            if (nameDisplay) nameDisplay.textContent = '';
+            const uploadBtn = document.getElementById('btnUploadResumeNow');
+            if (uploadBtn) uploadBtn.classList.add('d-none');
+            const uploadStatus = document.getElementById('resumeUploadStatus');
+            if (uploadStatus) uploadStatus.innerHTML = '';
+
+            syncDynamicFields();
+            checkDirty();
+
+            if (window.AppToast) {
+                AppToast.info('Unsaved changes discarded.');
+            }
+        }
+
+        // ==========================================
+        // 6. EVENT LISTENERS SETUP
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize dynamic lists
+            initSkills(initialRawSkills);
+            initCertifications(initialRawCerts);
+            initExperience(initialRawExp);
+            initProjects(initialRawProj);
+            syncDynamicFields();
+
+            // Establish baseline state
+            initialFormState = JSON.stringify(getFormState());
+            checkDirty();
+
+            // Listen for input/change on form
+            form.addEventListener('input', () => {
+                syncDynamicFields();
+                checkDirty();
+            });
+            form.addEventListener('change', () => {
+                syncDynamicFields();
+                checkDirty();
+            });
+
+            // Resume Upload Immediately Action
+            const btnUploadResumeNow = document.getElementById('btnUploadResumeNow');
+            const resumeUploadStatus = document.getElementById('resumeUploadStatus');
+
+            async function uploadResumeImmediately() {
+                const resumeInput = document.getElementById('resumeUploadInput');
+                if (!resumeInput || !resumeInput.files || resumeInput.files.length === 0) {
+                    if (window.AppToast) AppToast.error('Please select a PDF resume file first.');
+                    return;
+                }
+
+                const file = resumeInput.files[0];
+                if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+                    if (window.AppToast) AppToast.error('Only PDF files are allowed for resumes.');
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) {
+                    if (window.AppToast) AppToast.error('Resume file size exceeds maximum limit of 10MB.');
+                    return;
+                }
+
+                btnUploadResumeNow.disabled = true;
+                btnUploadResumeNow.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Uploading & Saving...';
+                resumeUploadStatus.innerHTML = '<span class="text-warning"><i class="fa-solid fa-spinner fa-spin me-1"></i> Saving resume to server and updating records...</span>';
+
+                const resumeFormData = new FormData();
+                resumeFormData.append('resumeFile', file);
+
+                try {
+                    const response = await fetch('/student/profile/resume', {
+                        method: 'POST',
+                        body: resumeFormData,
+                        headers: {
+                            [csrfHeader]: csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch (e) {}
+
+                    if (response.ok && data.success) {
+                        // Update badge
+                        const badgeContainer = document.getElementById('currentResumeBadgeContainer');
+                        if (badgeContainer) {
+                            badgeContainer.innerHTML = `
+                                <div id="currentResumeBadge" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-2">
+                                    <i class="fa-solid fa-check-circle me-1"></i> Current: <span>${escapeHtml(data.resumeFileName)}</span>
+                                </div>
+                            `;
+                        }
+
+                        // Update download & view buttons
+                        const downloadContainer = document.getElementById('resumeDownloadContainer');
+                        if (downloadContainer) {
+                            downloadContainer.innerHTML = `
+                                <a href="${data.viewUrl || ('/student/resume/' + data.resumeId + '/view')}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-medium"><i class="fa-solid fa-eye me-1"></i> View</a>
+                                <a href="${data.downloadUrl || ('/student/resume/' + data.resumeId + '/download')}" class="btn btn-sm btn-light border rounded-pill px-3 text-muted fw-medium"><i class="fa-solid fa-download me-1"></i> Download</a>
+                            `;
+                        }
+
+                        // Reset input and button
+                        resumeInput.value = '';
+                        btnUploadResumeNow.classList.add('d-none');
+                        btnUploadResumeNow.disabled = false;
+                        btnUploadResumeNow.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload & Replace Resume Now';
+
+                        const nameDisplay = document.getElementById('fileNameDisplay');
+                        if (nameDisplay) nameDisplay.textContent = '';
+
+                        resumeUploadStatus.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Resume successfully saved and persisted!</span>';
+                        setTimeout(() => { resumeUploadStatus.innerHTML = ''; }, 6000);
+
+                        // Reset baseline form state so dirty bar does not stay up
+                        initialFormState = JSON.stringify(getFormState());
+                        checkDirty();
+
+                        if (window.AppToast) {
+                            AppToast.success('Resume uploaded and saved successfully!');
+                        } else {
+                            showToast('Resume uploaded and saved successfully!');
+                        }
+                    } else {
+                        const errMsg = data.message || 'Resume upload failed. Your previous resume is still unchanged.';
+                        resumeUploadStatus.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ${escapeHtml(errMsg)}</span>`;
+                        btnUploadResumeNow.disabled = false;
+                        btnUploadResumeNow.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> Retry Upload';
+                        if (window.AppToast) {
+                            AppToast.error(errMsg);
+                        } else {
+                            showToast(errMsg, true);
+                        }
+                    }
+                } catch (err) {
+                    const errMsg = 'Upload failed: ' + err.message;
+                    resumeUploadStatus.innerHTML = `<span class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> ${escapeHtml(errMsg)}</span>`;
+                    btnUploadResumeNow.disabled = false;
+                    btnUploadResumeNow.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> Retry Upload';
+                    if (window.AppToast) {
+                        AppToast.error(errMsg);
+                    } else {
+                        showToast(errMsg, true);
+                    }
+                }
+            }
+
+            if (btnUploadResumeNow) {
+                btnUploadResumeNow.addEventListener('click', uploadResumeImmediately);
+            }
+
+            // Resume File Input
+            const resumeInput = document.getElementById('resumeUploadInput');
+            if (resumeInput) {
+                resumeInput.addEventListener('change', function() {
+                    const nameDisplay = document.getElementById('fileNameDisplay');
+                    if (this.files && this.files[0]) {
+                        nameDisplay.textContent = this.files[0].name + ' (' + (this.files[0].size / (1024 * 1024)).toFixed(2) + ' MB)';
+                        if (btnUploadResumeNow) btnUploadResumeNow.classList.remove('d-none');
+                        if (resumeUploadStatus) resumeUploadStatus.innerHTML = '';
+                    } else {
+                        nameDisplay.textContent = '';
+                        if (btnUploadResumeNow) btnUploadResumeNow.classList.add('d-none');
+                    }
+                    checkDirty();
+                });
+            }
+
+            // Resume Drag & Drop Zone
+            const resumeDropZone = document.getElementById('resumeDropZone');
+            if (resumeDropZone && resumeInput) {
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    resumeDropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        resumeDropZone.style.borderColor = '#F59E0B';
+                        resumeDropZone.style.backgroundColor = 'rgba(245, 158, 11, 0.08)';
+                    });
+                });
+                ['dragleave', 'drop'].forEach(eventName => {
+                    resumeDropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        resumeDropZone.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                        resumeDropZone.style.backgroundColor = 'rgba(245, 158, 11, 0.02)';
+                    });
+                });
+                resumeDropZone.addEventListener('drop', (e) => {
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                        const file = files[0];
+                        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                            resumeInput.files = files;
+                            const nameDisplay = document.getElementById('fileNameDisplay');
+                            if (nameDisplay) {
+                                nameDisplay.textContent = file.name + ' (' + (file.size / (1024 * 1024)).toFixed(2) + ' MB)';
+                            }
+                            if (btnUploadResumeNow) btnUploadResumeNow.classList.remove('d-none');
+                            if (resumeUploadStatus) resumeUploadStatus.innerHTML = '';
+                            checkDirty();
+                        } else {
+                            if (window.AppToast) AppToast.error('Please drop a valid PDF file.');
+                        }
+                    }
+                });
+            }
+
+            // Skills Input & Add
+            const skillInput = document.getElementById('skillInput');
+            const btnAddSkill = document.getElementById('btnAddSkill');
+            if (btnAddSkill && skillInput) {
+                skillInput.addEventListener('input', () => {
+                    checkDirty();
+                });
+                btnAddSkill.addEventListener('click', () => {
+                    addSkill(skillInput.value);
+                    skillInput.value = '';
+                    skillInput.focus();
+                });
+                skillInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addSkill(skillInput.value);
+                        skillInput.value = '';
+                    }
+                });
+            }
+
+            // Remove Skill Chip (delegated)
+            document.getElementById('skillsChipsContainer').addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.remove-chip-btn');
+                if (removeBtn) {
+                    const index = parseInt(removeBtn.getAttribute('data-index'), 10);
+                    removeSkill(index);
+                }
+            });
+
+            // Certifications Add & Remove
+            document.getElementById('btnAddCertification').addEventListener('click', () => {
+                addCertRow('');
+                syncDynamicFields();
+                checkDirty();
+                const inputs = document.querySelectorAll('.cert-item-input');
+                if (inputs.length) inputs[inputs.length - 1].focus();
+            });
+            document.getElementById('certificationsList').addEventListener('click', (e) => {
+                const btn = e.target.closest('.remove-cert-btn');
+                if (btn) {
+                    const row = btn.closest('.cert-entry');
+                    if (row) row.remove();
+                    syncDynamicFields();
+                    checkDirty();
+                }
+            });
+
+            // Experience Add & Remove
+            document.getElementById('btnAddExperience').addEventListener('click', () => {
+                addExperienceCard('', '', '');
+                syncDynamicFields();
+                checkDirty();
+                const cards = document.querySelectorAll('.exp-card');
+                if (cards.length) cards[cards.length - 1].querySelector('.exp-role')?.focus();
+            });
+            document.getElementById('experienceList').addEventListener('click', (e) => {
+                const btn = e.target.closest('.remove-exp-btn');
+                if (btn) {
+                    const card = btn.closest('.exp-card');
+                    if (card) card.remove();
+                    syncDynamicFields();
+                    checkDirty();
+                }
+            });
+
+            // Projects Add & Remove
+            document.getElementById('btnAddProject').addEventListener('click', () => {
+                addProjectCard('', '', '');
+                syncDynamicFields();
+                checkDirty();
+                const cards = document.querySelectorAll('.proj-card');
+                if (cards.length) cards[cards.length - 1].querySelector('.proj-title')?.focus();
+            });
+            document.getElementById('projectsList').addEventListener('click', (e) => {
+                const btn = e.target.closest('.remove-proj-btn');
+                if (btn) {
+                    const card = btn.closest('.proj-card');
+                    if (card) card.remove();
+                    syncDynamicFields();
+                    checkDirty();
+                }
+            });
+
+            // Save Buttons (Header, Floating, and Card)
+            if (btnHeaderSave) btnHeaderSave.addEventListener('click', saveProfile);
+            btnFloatingSave.addEventListener('click', saveProfile);
+            btnCardSave.addEventListener('click', saveProfile);
+            form.addEventListener('submit', saveProfile);
+
+            // Discard Buttons
+            btnFloatingDiscard.addEventListener('click', discardChanges);
+            btnCardDiscard.addEventListener('click', discardChanges);
+        });
+
+        // ==========================================
+        // 7. UNSAVED CHANGES NAVIGATION GUARD
+        // ==========================================
+
+        document.addEventListener('click', async function(e) {
+            const anchor = e.target.closest('a');
+            if (!anchor) return;
+            const href = anchor.getAttribute('href');
+            if (!href || href === '#' || href.startsWith('#') || href.startsWith('javascript:') || anchor.target === '_blank' || anchor.hasAttribute('download') || href.includes('/download')) return;
+
+            if (isDirty) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const action = await AppDialog.unsavedChanges({
+                    title: 'Unsaved Changes',
+                    message: 'You have unsaved changes. Would you like to save before leaving?',
+                    details: 'You can save your changes, discard them, or stay on this page to continue editing.',
+                    saveText: 'Save Changes',
+                    leaveText: 'Leave Without Saving',
+                    stayText: 'Stay on Page'
+                });
+
+                if (action === 'save') {
+                    const saved = await saveProfile();
+                    if (saved) {
+                        isDirty = false;
+                        window.location.href = href;
+                    }
+                } else if (action === 'leave') {
+                    isDirty = false;
+                    window.location.href = href;
+                }
+                // If action === 'stay', do nothing and stay on the page
+            }
+        });
+
+        window.addEventListener('beforeunload', function(e) {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // ==========================================
+        // 8. PROFILE PICTURE ASYNC LOGIC
+        // ==========================================
+
+        const uploadInput = document.getElementById('profileUploadInput');
+        const removeBtn = document.getElementById('btnRemovePicture');
+        const dropZone = document.getElementById('dropZone');
+        const dragOverlay = dropZone.querySelector('.drag-overlay');
+        const statusDiv = document.getElementById('uploadStatus');
+        const headerContainer = document.querySelector('.header-avatar-container');
+
+        function updateDOM(imgData) {
+            let previewImg = document.getElementById('profileImgPreview');
+            if (!previewImg && imgData) {
+                previewImg = document.createElement('img');
+                previewImg.id = 'profileImgPreview';
+                previewImg.style = 'width: 100%; height: 100%; object-fit: cover;';
+                dropZone.appendChild(previewImg);
+                const initial = document.getElementById('profileImgInitial');
+                if (initial) initial.remove();
+            }
+
+            if (imgData) {
+                previewImg.src = imgData;
+                removeBtn.classList.remove('d-none');
+
+                const headerImg = document.querySelector('.header-avatar-img');
+                const headerInitial = document.querySelector('.header-avatar-initial');
+                if (headerImg) {
+                    headerImg.src = imgData;
+                } else if (headerContainer) {
+                    const newHeaderImg = document.createElement('img');
+                    newHeaderImg.src = imgData;
+                    newHeaderImg.className = 'header-avatar-img';
+                    newHeaderImg.style = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;';
+                    headerContainer.appendChild(newHeaderImg);
+                    if (headerInitial) headerInitial.style.display = 'none';
+                }
+            } else {
+                if (previewImg) previewImg.remove();
+
+                const initial = document.createElement('span');
+                initial.id = 'profileImgInitial';
+                initial.style = 'font-size: 3rem; font-weight: bold; color: #F59E0B;';
+                initial.textContent = /*[[${#strings.substring(student.name, 0, 1)}]]*/ 'U';
+                dropZone.appendChild(initial);
+
+                removeBtn.classList.add('d-none');
+
+                const hImg = document.querySelector('.header-avatar-img');
+                const hInitial = document.querySelector('.header-avatar-initial');
+                if (hImg) hImg.remove();
+                if (hInitial) hInitial.style.display = 'block';
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toastMsg = document.getElementById('toastMessage');
+
+            toastMsg.textContent = message;
+            if (isError) {
+                toastMsg.className = 'alert text-center py-2 shadow-lg mx-auto bg-danger text-white border-danger';
+            } else {
+                toastMsg.className = 'alert text-center py-2 shadow-lg mx-auto bg-success text-white border-success';
+            }
+            toastMsg.style.maxWidth = '500px';
+            toastMsg.style.borderRadius = '12px';
+            toastMsg.style.fontWeight = '500';
+
+            container.style.display = 'block';
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 5000);
+        }
+
+        function handleFile(file) {
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) {
+                if (window.AppToast) AppToast.error('File too large. Maximum size is 5MB.');
+                else showToast('File too large. Maximum size is 5MB.', true);
+                return;
+            }
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                if (window.AppToast) AppToast.error('Invalid format. Only JPG, PNG, WEBP allowed.');
+                else showToast('Invalid format. Only JPG, PNG, WEBP allowed.', true);
+                return;
+            }
+
+            statusDiv.innerHTML = '<span class="text-info"><i class="fa-solid fa-spinner fa-spin me-2"></i>Uploading image...</span>';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(roleBaseUrl + '/profile/picture', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                },
+                body: formData
+            })
+            .then(async res => {
+                let data = {};
+                try { data = await res.json(); } catch(e) {}
+                if (res.ok && data.success) {
+                    statusDiv.innerHTML = '';
+                    if (window.AppToast) AppToast.success('Profile picture updated successfully!');
+                    else showToast('Profile picture updated successfully!');
+                    updateDOM(data.imageUrl);
+                } else {
+                    statusDiv.innerHTML = '';
+                    const errMsg = data.error || 'Upload failed due to a server error.';
+                    if (window.AppToast) AppToast.error(errMsg);
+                    else showToast(errMsg, true);
+                }
+            })
+            .catch(err => {
+                statusDiv.innerHTML = '';
+                const errMsg = 'Error uploading image: ' + err.message;
+                if (window.AppToast) AppToast.error(errMsg);
+                else showToast(errMsg, true);
+            });
+        }
+
+        if (uploadInput) {
+            uploadInput.addEventListener('change', (e) => {
+                handleFile(e.target.files[0]);
+            });
+        }
+
+        if (removeBtn) {
+            removeBtn.addEventListener('click', async () => {
+                const confirmed = await AppDialog.confirm({
+                    title: 'Remove Profile Picture?',
+                    message: 'Are you sure you want to remove your profile picture?',
+                    details: 'Your avatar will reset to default initials.',
+                    confirmText: 'Remove Picture',
+                    cancelText: 'Cancel',
+                    type: 'danger',
+                    icon: 'user-slash'
+                });
+                if (!confirmed) return;
+
+                fetch(roleBaseUrl + '/profile/picture/remove', { 
+                    method: 'POST',
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    }
+                })
+                .then(res => {
+                    if (res.ok) {
+                        if (window.AppToast) AppToast.success('Profile picture removed successfully!');
+                        else showToast('Picture removed successfully!');
+                        updateDOM(null);
+                    } else {
+                        if (window.AppToast) AppToast.error('Failed to remove picture.');
+                        else showToast('Failed to remove picture.', true);
+                    }
+                })
+                .catch(err => {
+                    if (window.AppToast) AppToast.error('Error removing image: ' + err.message);
+                    else showToast('Error removing image: ' + err.message, true);
+                });
+            });
+        }
+
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dragOverlay.classList.remove('d-none');
+                dragOverlay.classList.add('d-flex');
+            });
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dragOverlay.classList.add('d-none');
+                dragOverlay.classList.remove('d-flex');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragOverlay.classList.add('d-none');
+                dragOverlay.classList.remove('d-flex');
+                if (e.dataTransfer.files.length) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

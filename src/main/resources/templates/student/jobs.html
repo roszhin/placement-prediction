@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Jobs - Roshin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+    <style>
+        .job-card {
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--bs-box-shadow-sm);
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+            border-color: var(--primary-color);
+        }
+        .company-logo-placeholder {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .filter-section {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--bs-box-shadow-sm);
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="jobs">
+
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            
+            <div class="page-content">
+                <div class="container-fluid py-4">
+                    
+                    <div class="d-flex justify-content-between align-items-end mb-4 fade-in">
+                        <div>
+                            <h2 class="fw-bold text-main mb-1">Available Jobs</h2>
+                            <p class="text-muted mb-0">Discover and apply for your next career opportunity.</p>
+                        </div>
+                    </div>
+
+                    <!-- Filter Section -->
+                    <div class="filter-section p-4 mb-4 fade-in" style="animation-delay: 0.1s;">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Search</label>
+                                <div class="position-relative">
+                                    <i class="fa-solid fa-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                                    <input type="text" id="searchInput" class="form-control rounded-pill ps-5 bg-light border-0" placeholder="Search by job title or company...">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Location</label>
+                                <select id="locationFilter" class="form-select rounded-pill bg-light border-0">
+                                    <option value="">All Locations</option>
+                                    <!-- Dynamic options populated by JS -->
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button id="resetFilters" class="btn btn-outline-secondary rounded-pill w-100">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Job Listings -->
+                    <div class="row g-4" id="jobContainer">
+                        <div th:if="${#lists.isEmpty(jobs)}" class="col-12 text-center py-5 fade-in">
+                            <div class="text-muted fs-5"><i class="fa-solid fa-folder-open mb-3 fs-1 d-block"></i> No jobs are currently available.</div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-4 job-item fade-in" th:each="job, iterStat : ${jobs}" th:style="'animation-delay: ' + (${iterStat.index} * 0.05 + 0.2) + 's;'">
+                            <div class="job-card p-4 h-100 d-flex flex-column"
+                                 th:data-title="${job.jobTitle.toLowerCase()}"
+                                 th:data-company="${job.company.companyName.toLowerCase()}"
+                                 th:data-location="${job.location}">
+                                
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="company-logo-placeholder">
+                                            <span th:text="${#strings.substring(job.company.companyName, 0, 1).toUpperCase()}">C</span>
+                                        </div>
+                                        <div>
+                                            <h5 class="fw-bold mb-1 text-main text-truncate" style="max-width: 180px;" th:text="${job.jobTitle}">Job Title</h5>
+                                            <p class="text-muted small mb-0" th:text="${job.company.companyName}">Company Name</p>
+                                        </div>
+                                    </div>
+                                    <div class="ms-2 d-flex flex-column align-items-end gap-1">
+                                        <span th:if="${job.isActive}" class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-bold border border-success border-opacity-25" style="font-size: 0.75rem;">Open</span>
+                                        <span th:unless="${job.isActive}" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 fw-bold border border-danger border-opacity-25" style="font-size: 0.75rem;">Closed</span>
+                                        <span th:if="${appliedJobIds != null and appliedJobIds.contains(job.id)}" class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 fw-bold border border-primary border-opacity-25" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-circle-check me-1"></i>Applied
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4 flex-grow-1">
+                                    <p class="text-muted small mb-2" th:if="${not #strings.isEmpty(job.location)}">
+                                        <i class="fa-solid fa-location-dot me-2 text-primary"></i> <span th:text="${job.location}">Location</span>
+                                    </p>
+                                    <p class="text-muted small mb-3" th:if="${not #strings.isEmpty(job.packageOffered)}">
+                                        <i class="fa-solid fa-money-bill-wave me-2 text-primary"></i> <span th:text="${job.packageOffered}">Package</span>
+                                    </p>
+                                    <p class="text-muted small mb-2 line-clamp-2" th:if="${not #strings.isEmpty(job.eligibilityCriteria)}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        <strong class="text-dark">Eligibility:</strong> <span th:text="${job.eligibilityCriteria}">Criteria</span>
+                                    </p>
+                                    <p class="text-muted small mb-0 line-clamp-2" th:if="${not #strings.isEmpty(job.requiredSkills)}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        <strong class="text-dark">Skills:</strong> <span th:text="${job.requiredSkills}">Skills</span>
+                                    </p>
+                                </div>
+                                
+                                <div class="mt-auto border-top pt-3 d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small"><i class="fa-regular fa-calendar me-1"></i> <span th:text="${#temporals.format(job.createdAt, 'dd MMM yyyy')}">Date</span></span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a th:href="@{/student/job/{id}(id=${job.id})}" class="btn btn-sm btn-primary-premium rounded-pill px-4 fw-medium shadow-sm" style="transition: all 0.3s ease;">View Job</a>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State for JS Filtering -->
+                    <div id="noResults" class="text-center py-5 d-none">
+                        <div class="text-muted fs-5"><i class="fa-solid fa-magnifying-glass mb-3 fs-1 d-block"></i> No jobs match your current filters.</div>
+                        <button id="clearFiltersBtn" class="btn btn-outline-primary mt-3 rounded-pill">Clear Filters</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const locationFilter = document.getElementById('locationFilter');
+            const resetBtn = document.getElementById('resetFilters');
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            const jobItems = document.querySelectorAll('.job-item');
+            const noResults = document.getElementById('noResults');
+            
+            // Populate Location Dropdown dynamically based on available jobs
+            const locations = new Set();
+            jobItems.forEach(item => {
+                const card = item.querySelector('.job-card');
+                if (card && card.dataset.location) {
+                    locations.add(card.dataset.location.trim());
+                }
+            });
+            
+            locations.forEach(loc => {
+                if (loc) {
+                    const option = document.createElement('option');
+                    option.value = loc;
+                    option.textContent = loc;
+                    locationFilter.appendChild(option);
+                }
+            });
+
+            // Filter logic
+            function filterJobs() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedLocation = locationFilter.value;
+                
+                let visibleCount = 0;
+                
+                jobItems.forEach(item => {
+                    const card = item.querySelector('.job-card');
+                    if (!card) return;
+                    
+                    const title = card.dataset.title || "";
+                    const company = card.dataset.company || "";
+                    const location = card.dataset.location || "";
+                    
+                    const matchesSearch = title.includes(searchTerm) || company.includes(searchTerm);
+                    const matchesLocation = selectedLocation === "" || location === selectedLocation;
+                    
+                    if (matchesSearch && matchesLocation) {
+                        item.classList.remove('d-none');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('d-none');
+                    }
+                });
+                
+                if (visibleCount === 0 && jobItems.length > 0) {
+                    noResults.classList.remove('d-none');
+                } else {
+                    noResults.classList.add('d-none');
+                }
+            }
+            
+            searchInput.addEventListener('input', filterJobs);
+            locationFilter.addEventListener('change', filterJobs);
+            
+            function resetAll() {
+                searchInput.value = '';
+                locationFilter.value = '';
+                filterJobs();
+            }
+            
+            resetBtn.addEventListener('click', resetAll);
+            clearBtn.addEventListener('click', resetAll);
+        });
+    </script>
+</body>
+</html>

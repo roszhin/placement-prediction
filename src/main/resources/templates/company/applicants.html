@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Applicants - Company</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <style>
+        .admin-users-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            border: 1px solid #F59E0B;
+            max-width: 1400px; 
+            margin: 0 auto;
+        }
+        
+        /* Data Controls */
+        .data-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .search-wrapper {
+            position: relative;
+            width: 250px;
+        }
+        .search-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9CA3AF;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border-radius: 50rem;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+        .search-input:focus {
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+            outline: none;
+        }
+        .filter-dropdown {
+            padding: 10px 16px;
+            border-radius: 50rem;
+            border: 1px solid #E5E7EB;
+            color: #4B5563;
+            background: #fff;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .filter-dropdown:focus {
+            border-color: #F59E0B;
+        }
+
+        /* Table */
+        .admin-table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #F3F4F6;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+        .admin-table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #F9FAFB;
+            font-weight: 700;
+            color: #4B5563;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            padding: 16px 20px;
+            border-bottom: 2px solid #E5E7EB;
+            cursor: pointer;
+            user-select: none;
+        }
+        .admin-table thead th:hover {
+            background-color: #F3F4F6;
+        }
+        .admin-table td {
+            padding: 16px 20px;
+            vertical-align: middle;
+            border-bottom: 1px solid #F3F4F6;
+            color: #111827;
+            height: 72px;
+        }
+        .admin-table tbody tr {
+            background-color: #ffffff;
+            transition: background-color 0.25s ease;
+        }
+        .admin-table tbody tr:nth-child(even) {
+            background-color: #FAFAFA;
+        }
+        .admin-table tbody tr:hover {
+            background-color: rgba(245, 158, 11, 0.05);
+        }
+        
+        /* Avatar */
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            background-color: #F59E0B;
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(245,158,11,0.2);
+            object-fit: cover;
+        }
+
+        /* Badges */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 50rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-APPLIED { background-color: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+        .status-SHORTLISTED { background-color: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+        .status-REJECTED { background-color: rgba(239, 68, 68, 0.1); color: #EF4444; }
+        .status-SELECTED { background-color: rgba(16, 185, 129, 0.1); color: #10B981; }
+
+        /* Actions */
+        .action-btn-circle {
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 38px !important;
+            min-height: 38px !important;
+            border-radius: 50% !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: none;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            padding: 0 !important;
+            margin: 0 !important;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .action-btn-circle i {
+            font-size: 14px !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .action-btn-circle:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            color: #ffffff;
+        }
+        .btn-view-circle { background-color: #3B82F6; }
+        .btn-resume-circle { background-color: #8B5CF6; }
+        .btn-shortlist-circle { background-color: #10B981; }
+        .btn-reject-circle { background-color: #EF4444; }
+
+        /* Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination {
+            display: flex;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid #E5E7EB;
+            background: #ffffff;
+            color: #4B5563;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .page-btn:hover {
+            background: #F3F4F6;
+        }
+        .page-btn.active {
+            background: #F59E0B;
+            color: #ffffff;
+            border-color: #F59E0B;
+            box-shadow: 0 4px 10px rgba(245,158,11,0.2);
+        }
+
+        /* Utilities */
+        .text-truncate-custom {
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: #E5E7EB;
+            margin-bottom: 16px;
+        }
+        .empty-state h4 {
+            color: #6B7280;
+            font-weight: 600;
+        }
+        
+        .ai-score-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #E5E7EB;
+            border-radius: 50rem;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .ai-score-fill {
+            height: 100%;
+            border-radius: 50rem;
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="company-applicants">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+                <div class="container py-4">
+                    <div class="admin-users-card">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                            <div>
+                                <h2 class="fw-bold mb-0 text-dark" style="font-size: 1.8rem;">Manage <span style="color: #F59E0B;">Applicants</span></h2>
+                                <p class="text-muted mb-0" th:if="${job == null}">View and process applications across all your jobs.</p>
+                                <p class="text-muted mb-0" th:if="${job != null}">Viewing applicants for: <span class="fw-bold text-dark" th:text="${job.jobTitle}"></span></p>
+                            </div>
+                        </div>
+
+                        <div th:if="${success}" class="alert alert-success border-success text-success" th:text="${success}"></div>
+                        <div th:if="${error}" class="alert alert-danger border-danger text-danger" th:text="${error}"></div>
+
+                        <!-- Controls -->
+                        <div class="data-controls">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted fw-medium">Show</span>
+                                <select class="filter-dropdown" id="entriesSelect" style="padding: 6px 12px;">
+                                    <option value="5">5</option>
+                                    <option value="10" selected>10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <!-- Only show job filter if we are not locked to a specific job -->
+                                <select class="filter-dropdown" id="jobFilter" th:if="${job == null}">
+                                    <option value="">All Jobs</option>
+                                    <option th:each="j : ${activeJobs}" th:value="${j.jobTitle}" th:text="${j.jobTitle}"></option>
+                                </select>
+                                
+                                <select class="filter-dropdown" id="statusFilter">
+                                    <option value="">All Statuses</option>
+                                    <option value="APPLIED">Applied</option>
+                                    <option value="SHORTLISTED">Shortlisted</option>
+                                    <option value="SELECTED">SELECTED</option>
+                                    <option value="REJECTED">Rejected</option>
+                                </select>
+
+                                <div class="search-wrapper">
+                                    <i class="fa-solid fa-search"></i>
+                                    <input type="text" class="search-input" id="searchInput" placeholder="Search name or email...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="admin-table-container">
+                            <table class="admin-table" id="applicantsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 6%;">Profile</th>
+                                        <th style="width: 16%;" class="sortable">Name <i class="fa-solid fa-sort ms-1"></i></th>
+                                        <th style="width: 16%;" class="sortable">Job <i class="fa-solid fa-sort ms-1"></i></th>
+                                        <th style="width: 12%;" class="sortable">Date <i class="fa-solid fa-sort ms-1"></i></th>
+                                        <th style="width: 15%;" class="sortable">AI Match <i class="fa-solid fa-sort ms-1"></i></th>
+                                        <th style="width: 12%;" class="sortable">Status <i class="fa-solid fa-sort ms-1"></i></th>
+                                        <th style="width: 23%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <tr th:each="app : ${applicants}" class="data-row">
+                                        <td>
+                                            <img th:if="${app.student.profilePicture != null}" th:src="${app.student.profilePicture}" class="avatar-circle">
+                                            <div th:unless="${app.student.profilePicture != null}" class="avatar-circle" th:text="${#strings.substring(app.student.name, 0, 1)}"></div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-medium text-dark row-name" th:text="${app.student.name}"></div>
+                                            <div class="small text-muted text-truncate-custom row-email" th:title="${app.student.email}" th:text="${app.student.email}"></div>
+                                        </td>
+                                        <td class="row-job fw-medium text-dark" th:text="${app.job.jobTitle}"></td>
+                                        <td class="row-date text-muted" th:text="${#temporals.format(app.appliedAt, 'MMM dd, yyyy')}" th:data-raw="${app.appliedAt}"></td>
+                                        <td class="row-score" th:data-score="${app.atsScore != null ? app.atsScore : 0}">
+                                            <div th:if="${app.atsScore != null}">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="fw-bold fs-6" th:text="${#numbers.formatDecimal(app.atsScore, 1, 0) + '%'}"></span>
+                                                </div>
+                                                <div class="ai-score-bar">
+                                                    <div class="ai-score-fill" 
+                                                         th:style="'width: ' + ${app.atsScore} + '%; background-color: ' + (${app.atsScore >= 80 ? '#10B981' : (app.atsScore >= 60 ? '#F59E0B' : '#EF4444')})">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div th:unless="${app.atsScore != null}" class="text-muted small">
+                                                N/A
+                                            </div>
+                                        </td>
+                                        <td class="row-status" th:data-status="${app.status}">
+                                            <span class="status-badge" th:classappend="'status-' + ${app.status}" th:text="${app.status}"></span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex" style="gap: 8px;">
+                                                <a th:href="@{/company/application/{id}/profile(id=${app.id})}" class="action-btn-circle btn-view-circle" title="View Candidate Profile">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </a>
+                                                <a th:if="${app.resume != null}" th:href="@{/company/resume/download/{id}(id=${app.resume.id})}" class="action-btn-circle btn-resume-circle" title="Download Resume">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                </a>
+                                                
+                                                <!-- Action forms for status update -->
+                                                <form th:if="${app.status == 'APPLIED'}" th:action="@{/company/application/{id}/status(id=${app.id})}" method="POST" class="m-0">
+                                                    <input type="hidden" name="status" value="SHORTLISTED">
+                                                    <button type="submit" class="action-btn-circle btn-shortlist-circle" title="Shortlist">
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </button>
+                                                </form>
+                                                
+                                                <form th:if="${app.status == 'APPLIED' || app.status == 'SHORTLISTED'}" th:action="@{/company/application/{id}/status(id=${app.id})}" method="POST" class="m-0"
+                                                      data-confirm="Are you sure you want to reject this applicant?"
+                                                      data-confirm-title="Reject Application?"
+                                                      data-confirm-btn="Reject"
+                                                      data-confirm-cancel="Cancel"
+                                                      data-confirm-type="danger">
+                                                    <input type="hidden" name="status" value="REJECTED">
+                                                    <button type="submit" class="action-btn-circle btn-reject-circle" title="Reject">
+                                                        <i class="fa-solid fa-xmark"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div th:if="${#lists.isEmpty(applicants)}" class="empty-state">
+                                <i class="fa-solid fa-users-slash"></i>
+                                <h4>No applicants found.</h4>
+                                <p class="text-muted">You do not have any applications yet.</p>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="pagination-container" th:if="${!#lists.isEmpty(applicants)}">
+                            <span class="text-muted" id="pageInfo">Showing 1 to 10 of X entries</span>
+                            <ul class="pagination" id="pagination">
+                                <!-- Generated via JS -->
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('applicantsTable');
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.querySelectorAll('.data-row'));
+            if(rows.length === 0) return;
+
+            const searchInput = document.getElementById('searchInput');
+            const entriesSelect = document.getElementById('entriesSelect');
+            const jobFilter = document.getElementById('jobFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const pagination = document.getElementById('pagination');
+            const pageInfo = document.getElementById('pageInfo');
+            
+            let currentPage = 1;
+            let rowsPerPage = parseInt(entriesSelect.value);
+            let filteredRows = [...rows];
+            let currentSortCol = -1;
+            let currentSortAsc = true;
+
+            function applyFilters() {
+                const term = searchInput.value.toLowerCase();
+                const jobVal = jobFilter ? jobFilter.value : '';
+                const statusVal = statusFilter.value;
+                
+                filteredRows = rows.filter(row => {
+                    const nameText = row.querySelector('.row-name').textContent.toLowerCase();
+                    const emailText = row.querySelector('.row-email').textContent.toLowerCase();
+                    const matchesSearch = nameText.includes(term) || emailText.includes(term);
+                    
+                    const jobText = row.querySelector('.row-job').textContent;
+                    const matchesJob = jobVal === '' || jobText === jobVal;
+                    
+                    const statusText = row.querySelector('.row-status').getAttribute('data-status');
+                    const matchesStatus = statusVal === '' || statusText === statusVal;
+                    
+                    return matchesSearch && matchesJob && matchesStatus;
+                });
+                
+                // Re-apply sorting if any
+                if(currentSortCol !== -1) {
+                    sortFilteredRows(currentSortCol, currentSortAsc);
+                }
+                
+                currentPage = 1;
+                renderTable();
+            }
+
+            function sortFilteredRows(colIndex, asc) {
+                filteredRows.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    if(colIndex === 3) { // Date
+                        aVal = a.querySelector('.row-date').getAttribute('data-raw');
+                        bVal = b.querySelector('.row-date').getAttribute('data-raw');
+                        return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    } else if (colIndex === 4) { // Score
+                        aVal = parseFloat(a.querySelector('.row-score').getAttribute('data-score'));
+                        bVal = parseFloat(b.querySelector('.row-score').getAttribute('data-score'));
+                        return asc ? aVal - bVal : bVal - aVal;
+                    } else {
+                        aVal = a.cells[colIndex].textContent.trim();
+                        bVal = b.cells[colIndex].textContent.trim();
+                        return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    }
+                });
+            }
+
+            function renderTable() {
+                tbody.innerHTML = '';
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                const paginatedRows = filteredRows.slice(start, end);
+                
+                paginatedRows.forEach(row => tbody.appendChild(row));
+                
+                const total = filteredRows.length;
+                if(total === 0) {
+                    pageInfo.textContent = 'Showing 0 to 0 of 0 entries';
+                } else {
+                    pageInfo.textContent = `Showing ${start + 1} to ${Math.min(end, total)} of ${total} entries`;
+                }
+                
+                renderPagination(total);
+            }
+
+            function renderPagination(totalRows) {
+                pagination.innerHTML = '';
+                const totalPages = Math.ceil(totalRows / rowsPerPage);
+                if(totalPages <= 1) return;
+                
+                for(let i = 1; i <= totalPages; i++) {
+                    const li = document.createElement('li');
+                    const btn = document.createElement('button');
+                    btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                    btn.textContent = i;
+                    btn.onclick = () => {
+                        currentPage = i;
+                        renderTable();
+                    };
+                    li.appendChild(btn);
+                    pagination.appendChild(li);
+                }
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            if(jobFilter) jobFilter.addEventListener('change', applyFilters);
+            statusFilter.addEventListener('change', applyFilters);
+            
+            entriesSelect.addEventListener('change', (e) => {
+                rowsPerPage = parseInt(e.target.value);
+                currentPage = 1;
+                renderTable();
+            });
+
+            const headers = table.querySelectorAll('th.sortable');
+            headers.forEach((th, index) => {
+                th.addEventListener('click', () => {
+                    const colIndex = index + 1; // +1 to skip avatar
+                    if(currentSortCol === colIndex) {
+                        currentSortAsc = !currentSortAsc;
+                    } else {
+                        currentSortCol = colIndex;
+                        currentSortAsc = true; // default to asc, for scores we might want desc first but it's fine
+                    }
+                    
+                    sortFilteredRows(colIndex, currentSortAsc);
+                    renderTable();
+                });
+            });
+
+            // Initial render
+            renderTable();
+        });
+    </script>
+</body>
+</html>

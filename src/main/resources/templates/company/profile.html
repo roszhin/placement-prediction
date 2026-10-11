@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Profile - Skill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/app-dialog.js"></script>
+    <script src="/js/loader.js"></script>
+</head>
+<body data-theme="light" data-page-id="company-profile">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+        
+                <div class="dashboard-container container py-4" >
+                    <div class="row justify-content-center">
+                        <div class="col-md-8 col-lg-8" >
+                            <div class="corporate-card">
+                                <h3 class="fw-light mb-4 text-center">Company <span class="fw-bold">Profile</span></h3>
+
+                                <!-- Toast Container for Notifications -->
+                                <div class="position-fixed w-100" style="top: 20px; left: 0; z-index: 1050; display: none; padding: 0 20px;" id="toastContainer">
+                                    <div class="alert text-center py-2 shadow-lg mx-auto" style="max-width: 500px; border-radius: 12px; font-weight: 500;" id="toastMessage"></div>
+                                </div>
+
+                                <div th:if="${success}" class="alert alert-success border-success text-success text-center" th:text="${success}"></div>
+
+                        <div class="mb-4 text-center pb-3 border-bottom">
+                            <div class="profile-picture-container position-relative mx-auto mb-3" style="width: 140px; height: 140px; border-radius: 50%; border: 3px solid #F59E0B; background-color: #F9FAFB; display: flex; align-items: center; justify-content: center; overflow: hidden;" id="dropZone">
+                                <img th:if="${company.profilePicture != null}" th:src="${company.profilePicture}" id="profileImgPreview" style="width: 100%; height: 100%; object-fit: cover;" alt="Profile Picture">
+                                <span th:if="${company.profilePicture == null}" id="profileImgInitial" style="font-size: 3rem; font-weight: bold; color: #F59E0B;" th:text="${#strings.substring(company.name, 0, 1)}">C</span>
+                                
+                                <div class="drag-overlay position-absolute w-100 h-100 d-none align-items-center justify-content-center" style="background: rgba(245,158,11,0.8); top: 0; left: 0; z-index: 10;">
+                                    <i class="fa-solid fa-cloud-arrow-up text-white fs-2"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-center gap-3 mb-2 align-items-center">
+                                <label for="profileUploadInput" class="btn text-white rounded-pill shadow-sm m-0" style="background-color: #F59E0B; height: 48px; padding: 0 24px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 500; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#d97706'; this.style.transform='translateY(-1px)';" onmouseout="this.style.backgroundColor='#F59E0B'; this.style.transform='none';">
+                                    <i class="fa-solid fa-camera me-2 text-white"></i> Upload Image
+                                </label>
+                                <input type="file" id="profileUploadInput" class="d-none" accept="image/png, image/jpeg, image/jpg, image/webp">
+                                
+                                <button type="button" class="btn btn-outline-danger rounded-pill px-4 m-0" id="btnRemovePicture" th:classappend="${company.profilePicture == null} ? 'd-none' : ''" style="height: 48px; display: inline-flex; align-items: center; justify-content: center; font-weight: 500;">
+                                    <i class="fa-solid fa-trash me-2"></i> Remove
+                                </button>
+                            </div>
+                            <div class="text-muted small">Max size: 5MB (JPG, PNG, WEBP). Auto-crops to square.</div>
+                            <div id="uploadStatus" class="small mt-2 fw-medium"></div>
+                        </div>
+
+                                <form th:action="@{/company/profile}" method="POST">
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Representative Name</label>
+                                            <input type="text" class="form-control glass-input-premium" name="name" th:value="${company.name}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Company Name</label>
+                                            <input type="text" class="form-control glass-input-premium" name="companyName" th:value="${company.companyName}" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Email (Read-only)</label>
+                                            <input type="email" class="form-control glass-input-premium" th:value="${company.email}" readonly>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Phone Number</label>
+                                            <input type="text" class="form-control glass-input-premium" name="phoneNumber" th:value="${company.phoneNumber}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Industry</label>
+                                            <input type="text" class="form-control glass-input-premium" name="industry" th:value="${company.industry}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Website</label>
+                                            <input type="text" class="form-control glass-input-premium" name="website" th:value="${company.website}">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Company Size</label>
+                                            <input type="text" class="form-control glass-input-premium" name="companySize" th:value="${company.companySize}" placeholder="e.g. 50-200 Employees">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted">Founded Year</label>
+                                            <input type="text" class="form-control glass-input-premium" name="foundedYear" th:value="${company.foundedYear}" placeholder="e.g. 2010">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Headquarters / Location</label>
+                                        <textarea class="form-control glass-input-premium" name="address" rows="2" th:text="${company.address}"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">Company Description</label>
+                                        <textarea class="form-control glass-input-premium" name="companyDescription" rows="4" th:text="${company.companyDescription}"></textarea>
+                                    </div>
+                                    
+                                    <hr class="border-secondary my-4">
+                                    <h5 class="text-accent mb-3">Change Password</h5>
+                                    <p class="text-muted small mb-3">Leave blank if you do not wish to change your password.</p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted">New Password</label>
+                                        <input type="password" class="form-control glass-input-premium" name="newPassword">
+                                    </div>
+
+                                    <button type="submit" class="btn-premium w-100 mt-4 border-0" style="background: var(--text-color); color: var(--bg-color);">Update Profile</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        const uploadInput = document.getElementById('profileUploadInput');
+        const removeBtn = document.getElementById('btnRemovePicture');
+        const dropZone = document.getElementById('dropZone');
+        const dragOverlay = dropZone.querySelector('.drag-overlay');
+        const statusDiv = document.getElementById('uploadStatus');
+        
+        const roleBaseUrl = '/company';
+        
+        const headerContainer = document.querySelector('.header-avatar-container');
+        
+        function updateDOM(imgData) {
+            let previewImg = document.getElementById('profileImgPreview');
+            if (!previewImg && imgData) {
+                previewImg = document.createElement('img');
+                previewImg.id = 'profileImgPreview';
+                previewImg.style = 'width: 100%; height: 100%; object-fit: cover;';
+                dropZone.appendChild(previewImg);
+                const initial = document.getElementById('profileImgInitial');
+                if(initial) initial.remove();
+            }
+            
+            if (imgData) {
+                previewImg.src = imgData;
+                removeBtn.classList.remove('d-none');
+                
+                const headerImg = document.querySelector('.header-avatar-img');
+                const headerInitial = document.querySelector('.header-avatar-initial');
+                if(headerImg) {
+                    headerImg.src = imgData;
+                } else if(headerContainer) {
+                    const newHeaderImg = document.createElement('img');
+                    newHeaderImg.src = imgData;
+                    newHeaderImg.className = 'header-avatar-img';
+                    newHeaderImg.style = 'width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;';
+                    headerContainer.appendChild(newHeaderImg);
+                    if(headerInitial) headerInitial.style.display = 'none';
+                }
+            } else {
+                if(previewImg) previewImg.remove();
+                
+                const initial = document.createElement('span');
+                initial.id = 'profileImgInitial';
+                initial.style = 'font-size: 3rem; font-weight: bold; color: #F59E0B;';
+                initial.textContent = /*[[${#strings.substring(company.name, 0, 1)}]]*/ 'C';
+                dropZone.appendChild(initial);
+                
+                removeBtn.classList.add('d-none');
+                
+                const hImg = document.querySelector('.header-avatar-img');
+                const hInitial = document.querySelector('.header-avatar-initial');
+                if(hImg) hImg.remove();
+                if(hInitial) hInitial.style.display = 'block';
+            }
+        }
+        
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toastMsg = document.getElementById('toastMessage');
+            
+            toastMsg.textContent = message;
+            if (isError) {
+                toastMsg.className = 'alert text-center py-2 shadow-lg mx-auto bg-danger text-white border-danger';
+            } else {
+                toastMsg.className = 'alert text-center py-2 shadow-lg mx-auto bg-success text-white border-success';
+            }
+            toastMsg.style.maxWidth = '500px';
+            toastMsg.style.borderRadius = '12px';
+            toastMsg.style.fontWeight = '500';
+            
+            container.style.display = 'block';
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 5000);
+        }
+
+        function handleFile(file) {
+            if(!file) return;
+            if(file.size > 5 * 1024 * 1024) {
+                showToast('File too large. Maximum size is 5MB.', true);
+                return;
+            }
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if(!validTypes.includes(file.type)) {
+                showToast('Invalid format. Only JPG, PNG, WEBP allowed.', true);
+                return;
+            }
+            
+            statusDiv.innerHTML = '<span class="text-info"><i class="fa-solid fa-spinner fa-spin me-2"></i>Uploading image...</span>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+
+            fetch(roleBaseUrl + '/profile/picture', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                },
+                body: formData
+            })
+            .then(async res => {
+                let data = {};
+                try { data = await res.json(); } catch(e) {}
+                if(res.ok && data.success) {
+                    statusDiv.innerHTML = '';
+                    showToast('Profile picture updated successfully!');
+                    updateDOM(data.imageUrl);
+                } else {
+                    statusDiv.innerHTML = '';
+                    showToast(data.error || 'Upload failed due to a server error.', true);
+                }
+            })
+            .catch(err => {
+                statusDiv.innerHTML = '';
+                showToast('Error uploading image: ' + err.message, true);
+            });
+        }
+
+        uploadInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        removeBtn.addEventListener('click', async () => {
+            const confirmed = await AppDialog.confirm({
+                title: 'Remove Profile Picture?',
+                message: 'Are you sure you want to remove your company profile picture / logo?',
+                details: 'Your avatar will reset to default initials.',
+                confirmText: 'Remove Picture',
+                cancelText: 'Cancel',
+                type: 'danger',
+                icon: 'building'
+            });
+            if (!confirmed) return;
+            
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ '';
+            fetch(roleBaseUrl + '/profile/picture/remove', { 
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(res => {
+                if(res.ok) {
+                    if (window.AppToast) {
+                        AppToast.success('Picture removed successfully!');
+                    } else {
+                        showToast('Picture removed successfully!');
+                    }
+                    updateDOM(null);
+                } else {
+                    if (window.AppToast) {
+                        AppToast.error('Failed to remove picture.');
+                    } else {
+                        showToast('Failed to remove picture.', true);
+                    }
+                }
+            })
+            .catch(err => {
+                if (window.AppToast) {
+                    AppToast.error('Error removing image: ' + err.message);
+                } else {
+                    showToast('Error removing image: ' + err.message, true);
+                }
+            });
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragOverlay.classList.remove('d-none');
+            dragOverlay.classList.add('d-flex');
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragOverlay.classList.add('d-none');
+            dragOverlay.classList.remove('d-flex');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragOverlay.classList.add('d-none');
+            dragOverlay.classList.remove('d-flex');
+            if(e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+    </script>
+</body>
+</html>

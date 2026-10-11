@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Roshin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+    <style>
+        .corporate-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 24px;
+            border: 1px solid rgba(0,0,0,0.05);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .table-responsive-premium {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            min-width: 0;
+        }
+        .row.mb-4 {
+            gap: 0;
+        }
+        .row {
+            --bs-gutter-x: 1.5rem;
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="dashboard">
+
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+
+                <div class="container-fluid py-4" >
+                    
+                    <div th:if="${success}" class="alert alert-success border-success text-success" th:text="${success}" ></div>
+                    <div th:if="${error}" class="alert alert-danger border-danger text-danger" th:text="${error}" ></div>
+                    
+                    <div th:if="${profileCompletion < 100}" class="alert alert-warning small border-warning text-warning d-flex justify-content-between align-items-center" >
+                        <div><i class="fa-solid fa-triangle-exclamation me-2"></i>Your profile is only <span th:text="${profileCompletion}"></span>% complete. Please update your profile to get accurate AI predictions.</div>
+                        <a th:href="@{/student/profile}" class="btn btn-sm btn-outline-warning">Update Profile</a>
+                    </div>
+
+                    <!-- Top Statistics Row -->
+                    <div class="row mb-4" >
+                        <div class="col-md-2 mb-3">
+                            <div class="corporate-card text-center h-100 p-3 border-info" style="border-width: 1px;">
+                                <h3 class="text-light fw-bold" th:text="${totalJobsAvailable}">0</h3>
+                                <p class="text-muted mb-0 small">Total Jobs Available</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="corporate-card text-center h-100 p-3">
+                                <h3 class="text-info fw-bold" th:text="${jobsApplied}">0</h3>
+                                <p class="text-muted mb-0 small">Jobs Applied</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="corporate-card text-center h-100 p-3">
+                                <h3 class="text-warning fw-bold" th:text="${shortlistedCount}">0</h3>
+                                <p class="text-muted mb-0 small">Shortlisted</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="corporate-card text-center h-100 p-3">
+                                <h3 class="text-success fw-bold" th:text="${selectedCount}">0</h3>
+                                <p class="text-muted mb-0 small">Selected</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="corporate-card text-center h-100 p-3 border-primary" style="border-width: 1px;">
+                                <h3 class="text-primary fw-bold" th:text="${overallPlacementScore} + '%'">0%</h3>
+                                <p class="text-muted mb-0 small">Avg AI Score</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <div class="corporate-card text-center h-100 p-3 border-secondary" style="border-width: 1px;">
+                                <h3 class="text-secondary fw-bold" th:text="${profileCompletion} + '%'">0%</h3>
+                                <p class="text-muted mb-0 small">Profile Completion</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4" >
+                        <!-- Main Content Top (Jobs) -->
+                        <div class="col-12 mb-3">
+                            <div class="corporate-card h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="d-flex gap-2">
+                                        <a th:href="@{/student/jobs/matched}" class="btn btn-primary-premium rounded-pill px-3 py-1 fw-medium shadow-sm" style="font-size: 0.85rem;"><i class="fa-solid fa-wand-magic-sparkles me-1"></i> AI Job Match</a>
+                                        <a th:href="@{/student/companies}" class="btn btn-outline-secondary rounded-pill px-3 py-1 fw-medium" style="font-size: 0.85rem;"><i class="fa-solid fa-building me-1"></i> Browse Companies</a>
+                                        <a th:href="@{/student/jobs}" class="btn btn-outline-warning rounded-pill px-4" style="transition: all 0.3s; box-shadow: var(--bs-box-shadow-sm);">See All Jobs</a>
+                                    </div>
+                                </div>
+                                <div class="table-responsive table-responsive-premium d-none d-lg-block" style="width: 100%; max-width: 100%;">
+                                    <table class="table align-middle table-hover mb-0 w-100" style="border-collapse: separate; border-spacing: 0 10px; table-layout: auto; white-space: nowrap;">
+                                        <thead>
+                                            <tr>
+                                                <th class="border-0 text-muted small fw-bold text-uppercase pb-2 ps-3">Company</th>
+                                                <th class="border-0 text-muted small fw-bold text-uppercase pb-2">Job Title</th>
+                                                <th class="border-0 text-muted small fw-bold text-uppercase pb-2">Location</th>
+                                                <th class="border-0 text-muted small fw-bold text-uppercase pb-2">Package</th>
+                                                <th class="border-0 text-muted small fw-bold text-uppercase pb-2">Posted</th>
+                                                <th class="border-0 text-muted small fw-bold text-uppercase pb-2">Status</th>
+                                                <th class="border-0 text-muted small fw-bold text-uppercase pb-2 text-center pe-3">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="job, iterStat : ${jobs}" th:if="${iterStat.index < 5}" class="bg-white shadow-sm" style="border-radius: 12px; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-sm)';">
+                                                <td class="border-0" style="border-top-left-radius: 12px; border-bottom-left-radius: 12px; padding: 16px;">
+                                                    <div class="d-flex align-items-center">
+                                                        <div th:if="${job.company.profilePicture != null}">
+                                                            <img th:src="${job.company.profilePicture}" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover; padding: 2px;">
+                                                        </div>
+                                                        <div th:unless="${job.company.profilePicture != null}" class="rounded-circle border bg-light d-flex align-items-center justify-content-center text-secondary" style="width: 40px; height: 40px;">
+                                                            <i class="fa-solid fa-building"></i>
+                                                        </div>
+                                                        <span class="ms-3 fw-bold text-dark text-wrap" style="max-width: 150px; display: inline-block; white-space: normal;" th:text="${job.company.companyName}"></span>
+                                                    </div>
+                                                </td>
+                                                <td class="border-0" style="padding: 16px; white-space: normal;">
+                                                    <span class="fw-medium text-dark text-wrap" style="max-width: 180px; display: inline-block;" th:text="${job.jobTitle}"></span>
+                                                </td>
+                                                <td class="border-0" style="padding: 16px;">
+                                                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-medium"><i class="fa-solid fa-location-dot me-1 text-danger"></i> <span th:text="${job.location}"></span></span>
+                                                </td>
+                                                <td class="border-0" style="padding: 16px;">
+                                                    <span class="badge bg-light text-dark border border-warning px-3 py-2 rounded-pill fw-bold"><i class="fa-solid fa-indian-rupee-sign me-1 text-warning"></i> <span th:text="${job.packageOffered}"></span></span>
+                                                </td>
+                                                <td class="border-0 text-muted small" style="padding: 16px;">
+                                                    <span class="time-ago" th:data-date="${job.createdAt}"></span>
+                                                </td>
+                                                <td class="border-0" style="padding: 16px;">
+                                                    <th:block th:if="${!job.isActive}">
+                                                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill border border-danger"><i class="fa-solid fa-lock me-1"></i> Closed</span>
+                                                    </th:block>
+                                                    <th:block th:if="${job.isActive}">
+                                                        <span th:if="${job.lastDateToApply != null && job.lastDateToApply.isBefore(#temporals.createNow().plusDays(3))}" class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill border border-warning"><i class="fa-solid fa-hourglass-half me-1"></i> Closing Soon</span>
+                                                        <span th:unless="${job.lastDateToApply != null && job.lastDateToApply.isBefore(#temporals.createNow().plusDays(3))}" class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success"><i class="fa-solid fa-door-open me-1"></i> Open</span>
+                                                    </th:block>
+                                                </td>
+                                                <td class="border-0 text-center" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; padding: 16px; min-width: 140px;">
+                                                    <a th:href="@{/student/job/{jobId}(jobId=${job.id})}" class="btn btn-outline-warning rounded-pill px-4 fw-bold action-btn w-100" style="transition: all 0.2s ease;">View Job</a>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${#lists.isEmpty(jobs)}">
+                                                <td colspan="7" class="text-center text-muted border-0 py-5 bg-white rounded-3 shadow-sm">
+                                                    <i class="fa-solid fa-box-open fs-1 text-secondary opacity-50 mb-3 d-block"></i>
+                                                    No jobs are currently available. Check back later.
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Mobile Stacked Cards View -->
+                                <div class="d-lg-none">
+                                    <div th:each="job, iterStat : ${jobs}" th:if="${iterStat.index < 5}" class="card border-0 shadow-sm mb-3" style="border-radius: 16px; overflow: hidden; transition: transform 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div th:if="${job.company.profilePicture != null}">
+                                                        <img th:src="${job.company.profilePicture}" class="rounded-circle border" style="width: 48px; height: 48px; object-fit: cover; padding: 2px;">
+                                                    </div>
+                                                    <div th:unless="${job.company.profilePicture != null}" class="rounded-circle border bg-light d-flex align-items-center justify-content-center text-secondary" style="width: 48px; height: 48px;">
+                                                        <i class="fa-solid fa-building fs-5"></i>
+                                                    </div>
+                                                    <div class="ms-3">
+                                                        <h6 class="mb-0 fw-bold text-dark" th:text="${job.jobTitle}"></h6>
+                                                        <small class="text-muted" th:text="${job.company.companyName}"></small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                                <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill fw-medium"><i class="fa-solid fa-location-dot me-1 text-danger"></i> <span th:text="${job.location}"></span></span>
+                                                <span class="badge bg-light text-dark border border-warning px-3 py-2 rounded-pill fw-bold"><i class="fa-solid fa-indian-rupee-sign me-1 text-warning"></i> <span th:text="${job.packageOffered}"></span></span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                                <span class="text-muted small time-ago" th:data-date="${job.createdAt}"></span>
+                                                <th:block th:if="${!job.isActive}">
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill border border-danger"><i class="fa-solid fa-lock me-1"></i> Closed</span>
+                                                </th:block>
+                                                <th:block th:if="${job.isActive}">
+                                                    <span th:if="${job.lastDateToApply != null && job.lastDateToApply.isBefore(#temporals.createNow().plusDays(3))}" class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill border border-warning"><i class="fa-solid fa-hourglass-half me-1"></i> Closing Soon</span>
+                                                    <span th:unless="${job.lastDateToApply != null && job.lastDateToApply.isBefore(#temporals.createNow().plusDays(3))}" class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success"><i class="fa-solid fa-door-open me-1"></i> Open</span>
+                                                </th:block>
+                                            </div>
+                                            <a th:href="@{/student/job/{jobId}(jobId=${job.id})}" class="btn btn-outline-warning w-100 rounded-pill py-2 fw-bold action-btn" style="transition: all 0.2s ease;">View Job</a>
+                                        </div>
+                                    </div>
+                                    <div th:if="${#lists.isEmpty(jobs)}" class="text-center text-muted py-5 bg-white rounded-4 shadow-sm border-0">
+                                        <i class="fa-solid fa-box-open fs-1 text-secondary opacity-50 mb-3 d-block"></i>
+                                        No jobs are currently available.<br>Check back later.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <!-- Bottom Row: Status Overview and Recent Activity -->
+                    <div class="row mb-4">
+                        <!-- Application Status Overview -->
+                        <div class="col-lg-6 mb-3">
+                            <div class="corporate-card h-100 d-flex flex-column">
+                                <h5 class="fw-light mb-4 text-center">Application <span class="fw-bold">Status Overview</span></h5>
+                                <div style="position: relative; height: 260px; width: 100%; max-width: 350px; margin: 0 auto 20px auto;">
+                                    <canvas id="statusOverviewChart"></canvas>
+                                </div>
+                                <div class="row justify-content-center mt-auto">
+                                    <div class="col-12">
+                                        <div class="row g-3">
+                                            <div class="col-6">
+                                                <div class="p-3 bg-light rounded-3 border text-center shadow-sm h-100" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                                    <div class="text-muted small fw-bold text-uppercase mb-2"><i class="fa-solid fa-circle text-warning me-2"></i>Applied</div>
+                                                    <div class="fs-4 fw-bold text-dark" th:text="${statusOverview[0]}">0</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="p-3 bg-light rounded-3 border text-center shadow-sm h-100" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                                    <div class="text-muted small fw-bold text-uppercase mb-2"><i class="fa-solid fa-circle text-success me-2"></i>Shortlisted</div>
+                                                    <div class="fs-4 fw-bold text-dark" th:text="${statusOverview[1]}">0</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="p-3 bg-light rounded-3 border text-center shadow-sm h-100" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                                    <div class="text-muted small fw-bold text-uppercase mb-2"><i class="fa-solid fa-circle text-info me-2"></i>Selected</div>
+                                                    <div class="fs-4 fw-bold text-dark" th:text="${statusOverview[2]}">0</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="p-3 bg-light rounded-3 border text-center shadow-sm h-100" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                                    <div class="text-muted small fw-bold text-uppercase mb-2"><i class="fa-solid fa-circle text-danger me-2"></i>Rejected</div>
+                                                    <div class="fs-4 fw-bold text-dark" th:text="${statusOverview[3]}">0</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="col-lg-6 mb-3">
+                            <div class="corporate-card h-100 d-flex flex-column">
+                                <h5 class="fw-light mb-4"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i> Recent <span class="fw-bold">Activity</span></h5>
+                                
+                                <div class="list-group list-group-flush flex-grow-1" style="overflow-y: auto; max-height: 480px; padding-right: 5px;">
+                                    <!-- Only show up to 4 recent applications -->
+                                    <a th:each="app, iterStat : ${applications}" th:if="${iterStat.index < 4 && app.id != null}" th:href="@{/student/application/{id}/details(id=${app.id})}" class="list-group-item list-group-item-action py-3" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                        <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                            <h6 class="mb-0 text-dark fw-bold text-truncate pe-2" th:text="${app.job.jobTitle}">Job Title</h6>
+                                            <small class="text-muted fw-medium text-nowrap" th:text="${#temporals.format(app.appliedAt, 'dd MMM')}">Date</small>
+                                        </div>
+                                        <p class="mb-2 small text-secondary" th:text="${app.job.company.companyName}">Company</p>
+                                        <span th:if="${app.status == 'APPLIED' || app.status == 'UNDER_REVIEW'}" class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill border border-warning"><i class="fa-solid fa-hourglass-half me-1"></i> Under Review</span>
+                                        <span th:if="${app.status == 'SHORTLISTED' || app.status == 'INTERVIEW_SCHEDULED'}" class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill border border-success"><i class="fa-solid fa-check me-1"></i> Shortlisted</span>
+                                        <span th:if="${app.status == 'SELECTED'}" class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill border border-info"><i class="fa-solid fa-trophy me-1"></i> Selected</span>
+                                        <span th:if="${app.status == 'REJECTED'}" class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill border border-danger"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
+                                    </a>
+                                    <div th:if="${#lists.isEmpty(applications)}" class="d-flex flex-column align-items-center justify-content-center h-100 text-muted p-4">
+                                        <i class="fa-solid fa-clock-rotate-left fs-1 opacity-50 mb-3"></i>
+                                        <p class="mb-0">No recent applications.</p>
+                                    </div>
+                                </div>
+                                <div class="text-center mt-4 pt-3 border-top" th:unless="${#lists.isEmpty(applications)}">
+                                    <a th:href="@{/student/applications}" class="btn btn-outline-warning rounded-pill px-4 fw-bold" style="transition: all 0.3s; box-shadow: var(--bs-box-shadow-sm);">View All Applications <i class="fa-solid fa-arrow-right ms-2"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js Setup -->
+    <script th:inline="javascript">
+        // Global defaults
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.font.family = "'Inter', 'Segoe UI', Roboto, sans-serif";
+
+        // Time-Ago Formatting
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.time-ago').forEach(el => {
+                const dateStr = el.getAttribute('data-date');
+                if (dateStr) {
+                    const date = new Date(dateStr);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - date);
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 0) {
+                        el.textContent = 'Today';
+                    } else if (diffDays === 1) {
+                        el.textContent = 'Yesterday';
+                    } else if (diffDays < 7) {
+                        el.textContent = diffDays + ' Days Ago';
+                    } else {
+                        el.textContent = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                    }
+                }
+            });
+        });
+
+        // Status Overview Doughnut Chart
+        const statusOverview = /*[[${statusOverview}]]*/ [0, 0, 0, 0];
+        
+        new Chart(document.getElementById('statusOverviewChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Applied', 'Shortlisted', 'Selected', 'Rejected'],
+                datasets: [{
+                    data: statusOverview,
+                    backgroundColor: ['#F59E0B', '#FDBA74', '#FCD34D', '#10B981', '#6366F1', '#3B82F6'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, padding: 15 } }
+                }
+            }
+        });
+
+
+    </script>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

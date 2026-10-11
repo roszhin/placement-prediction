@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+    <div th:fragment="topbar" class="topbar floating-topbar d-flex justify-content-between align-items-center w-100">
+        
+        <!-- Left Side: Breadcrumb & Search -->
+        <div class="d-flex align-items-center gap-3 gap-md-4">
+            <button class="btn btn-light d-md-none rounded-circle border-0 d-flex align-items-center justify-content-center" type="button" style="width: 40px; height: 40px;" onclick="document.querySelector('.floating-sidebar').classList.toggle('show-mobile-sidebar')">
+                <i class="fa-solid fa-bars text-muted"></i>
+            </button>
+            <a href="javascript:history.back()" class="text-muted text-decoration-none fw-medium d-none d-sm-block">
+                <i class="fa-solid fa-arrow-left me-2"></i>Dashboard
+            </a>
+            <div class="search-bar position-relative">
+                <i class="fa-solid fa-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                <input type="text" class="form-control rounded-pill ps-5 bg-light border-0 shadow-none" placeholder="Search..." style="max-width: 250px;">
+            </div>
+        </div>
+
+        <!-- Right Side: Actions & Profile -->
+        <div class="d-flex align-items-center" style="gap: 20px;">
+            
+            <!-- Profile Dropdown -->
+            <div class="dropdown">
+                <div class="d-flex align-items-center bg-white shadow-sm" data-bs-toggle="dropdown" aria-expanded="false" style="max-width: 360px; height: 72px; border-radius: 18px; border: 1px solid var(--border-color); padding: 0 16px; cursor: pointer; gap: 16px; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-sm)';">
+                    
+                    <div class="header-avatar-container avatar text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background-color: #F59E0B; font-size: 20px; font-weight: 600; text-transform: uppercase; overflow: hidden; position: relative;">
+                        <img th:if="${#authentication.principal.user.profilePicture != null}" th:src="${#authentication.principal.user.profilePicture}" class="header-avatar-img" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;" alt="Avatar">
+                        <span th:if="${#authentication.principal.user.profilePicture == null}" class="header-avatar-initial" th:text="${#strings.substring(#authentication.principal.user.name, 0, 1)}">U</span>
+                    </div>
+                    
+                    <div class="d-none d-sm-flex flex-column justify-content-center flex-grow-1" style="min-width: 0; width: 200px;">
+                        <span style="font-size: 16px; font-weight: 600; color: #111827; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" th:text="${#authentication.principal.user.name}">User Name</span>
+                        <span style="font-size: 13px; color: #6B7280; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;" th:text="${#authentication.principal.user.email}">user@example.com</span>
+                    </div>
+                    
+                    <i class="fa-solid fa-chevron-down text-muted flex-shrink-0 ms-1 d-none d-sm-block" style="font-size: 14px;"></i>
+                </div>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; margin-top: 10px; min-width: 200px; animation: fadeIn 0.2s ease;">
+                    <th:block sec:authorize="hasAuthority('ROLE_STUDENT')">
+                        <li><a class="dropdown-item py-2" th:href="@{/student/profile}"><i class="fa-regular fa-user me-2 text-muted"></i> My Profile</a></li>
+                        <li><a class="dropdown-item py-2" th:href="@{/student/dashboard}"><i class="fa-solid fa-house me-2 text-muted"></i> Dashboard</a></li>
+                    </th:block>
+                    <th:block sec:authorize="hasAuthority('ROLE_ADMIN')">
+                        <li><a class="dropdown-item py-2" th:href="@{/admin/profile}"><i class="fa-regular fa-user me-2 text-muted"></i> My Profile</a></li>
+                        <li><a class="dropdown-item py-2" th:href="@{/admin/dashboard}"><i class="fa-solid fa-house me-2 text-muted"></i> Dashboard</a></li>
+                    </th:block>
+                    <th:block sec:authorize="hasAuthority('ROLE_FACULTY')">
+                        <li><a class="dropdown-item py-2" th:href="@{/faculty/profile}"><i class="fa-regular fa-user me-2 text-muted"></i> My Profile</a></li>
+                        <li><a class="dropdown-item py-2" th:href="@{/faculty/dashboard}"><i class="fa-solid fa-house me-2 text-muted"></i> Dashboard</a></li>
+                    </th:block>
+                    <th:block sec:authorize="hasAuthority('ROLE_COMPANY')">
+                        <li><a class="dropdown-item py-2" th:href="@{/company/profile}"><i class="fa-regular fa-user me-2 text-muted"></i> My Profile</a></li>
+                        <li><a class="dropdown-item py-2" th:href="@{/company/dashboard}"><i class="fa-solid fa-house me-2 text-muted"></i> Dashboard</a></li>
+                    </th:block>
+                    
+                    <li sec:authorize="!hasAuthority('ROLE_STUDENT')"><hr class="dropdown-divider"></li>
+                    <li>
+                        <form th:action="@{/logout}" method="post" class="m-0"
+                              data-confirm="Are you sure you want to sign out?"
+                              data-confirm-title="Sign Out?"
+                              data-confirm-btn="Sign Out"
+                              data-confirm-cancel="Stay"
+                              data-confirm-type="warning"
+                              data-confirm-icon="arrow-right-from-bracket">
+                            <button type="submit" class="dropdown-item py-2 text-danger">
+                                <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+

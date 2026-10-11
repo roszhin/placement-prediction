@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiring Companies - Roshin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+    <style>
+        .company-card {
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--bs-box-shadow-sm);
+        }
+        .company-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+            border-color: var(--primary-color);
+        }
+        .company-logo-placeholder {
+            width: 56px;
+            height: 56px;
+            min-width: 56px;
+            border-radius: 14px;
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .company-logo-img {
+            width: 56px;
+            height: 56px;
+            min-width: 56px;
+            border-radius: 14px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+        .filter-section {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--bs-box-shadow-sm);
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="companies">
+
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            
+            <div class="page-content">
+                <div class="container-fluid py-4">
+                    
+                    <!-- Header -->
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end mb-4 gap-3 fade-in">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h2 class="fw-bold text-main mb-0">Partner Companies</h2>
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill px-3 py-1 fw-bold" style="font-size: 0.8rem;">
+                                    <i class="fa-solid fa-building me-1"></i><span th:text="${totalCompanies}">0</span> Hiring
+                                </span>
+                            </div>
+                            <p class="text-muted mb-0">Explore verified companies actively offering placement opportunities.</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/student/jobs}" class="btn btn-outline-secondary rounded-pill px-4 fw-medium shadow-sm">
+                                <i class="fa-solid fa-briefcase me-2"></i>All Jobs
+                            </a>
+                            <a th:href="@{/student/jobs/matched}" class="btn btn-primary-premium rounded-pill px-4 fw-medium shadow-sm">
+                                <i class="fa-solid fa-wand-magic-sparkles me-2"></i>AI Job Match
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Filter Section -->
+                    <div class="filter-section p-4 mb-4 fade-in" style="animation-delay: 0.1s;">
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Search</label>
+                                <div class="position-relative">
+                                    <i class="fa-solid fa-search position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                                    <input type="text" id="searchInput" class="form-control rounded-pill ps-5 bg-light border-0" placeholder="Search by company name, industry, or location...">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Industry</label>
+                                <select id="industryFilter" class="form-select rounded-pill bg-light border-0">
+                                    <option value="">All Industries</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button id="resetFilters" class="btn btn-outline-secondary rounded-pill w-100">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Companies Grid -->
+                    <div class="row g-4" id="companyContainer">
+                        <!-- Server-side Empty State -->
+                        <div th:if="${#lists.isEmpty(companies)}" class="col-12 text-center py-5 fade-in">
+                            <div class="text-muted fs-5">
+                                <i class="fa-solid fa-building-circle-exclamation mb-3 fs-1 d-block text-warning"></i>
+                                No companies currently have open jobs available.
+                            </div>
+                            <p class="text-muted small">New job opportunities are added regularly. Check back soon!</p>
+                            <a th:href="@{/student/jobs}" class="btn btn-outline-primary rounded-pill px-4 mt-2">Browse All Job Postings</a>
+                        </div>
+                        
+                        <!-- Company Cards -->
+                        <div class="col-md-6 col-lg-4 company-item fade-in" th:each="card, iterStat : ${companies}" th:style="'animation-delay: ' + (${iterStat.index} * 0.05 + 0.15) + 's;'">
+                            <div class="company-card p-4 h-100 d-flex flex-column"
+                                 th:data-name="${card.companyName != null ? card.companyName.toLowerCase() : ''}"
+                                 th:data-industry="${card.industry != null ? card.industry : ''}"
+                                 th:data-location="${card.location != null ? card.location.toLowerCase() : ''}">
+                                
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <!-- Company Logo or Placeholder -->
+                                        <div th:if="${card.profilePicture != null and not #strings.isEmpty(card.profilePicture)}">
+                                            <img th:src="${card.profilePicture}" alt="Company Logo" class="company-logo-img">
+                                        </div>
+                                        <div th:unless="${card.profilePicture != null and not #strings.isEmpty(card.profilePicture)}" class="company-logo-placeholder">
+                                            <span th:text="${card.companyName != null and #strings.length(card.companyName) > 0 ? #strings.substring(card.companyName, 0, 1).toUpperCase() : 'C'}">C</span>
+                                        </div>
+                                        <div>
+                                            <h5 class="fw-bold mb-1 text-main text-truncate" style="max-width: 180px;" th:text="${card.companyName}">Company Name</h5>
+                                            <span th:if="${card.industry != null and not #strings.isEmpty(card.industry)}" class="badge bg-light text-secondary border px-2 py-1 small" th:text="${card.industry}">Technology</span>
+                                            <span th:unless="${card.industry != null and not #strings.isEmpty(card.industry)}" class="badge bg-light text-secondary border px-2 py-1 small">Recruiter</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-bold border border-success border-opacity-25" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-briefcase me-1"></i><span th:text="${card.openJobCount}">1</span> Open
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4 flex-grow-1">
+                                    <p class="text-muted small mb-2" th:if="${card.location != null and not #strings.isEmpty(card.location)}">
+                                        <i class="fa-solid fa-location-dot me-2 text-primary"></i> <span th:text="${card.location}">Location</span>
+                                    </p>
+                                    <p class="text-muted small mb-2" th:if="${card.website != null and not #strings.isEmpty(card.website)}">
+                                        <i class="fa-solid fa-globe me-2 text-primary"></i>
+                                        <a th:href="${card.website.startsWith('http') ? card.website : 'https://' + card.website}" target="_blank" class="text-decoration-none text-muted" th:text="${card.website}">Website</a>
+                                    </p>
+                                    <p class="text-muted small mb-0 line-clamp-2" th:if="${card.companyDescription != null and not #strings.isEmpty(card.companyDescription)}" th:text="${card.companyDescription}">
+                                        Company overview description.
+                                    </p>
+                                    <p class="text-muted small mb-0 fst-italic" th:unless="${card.companyDescription != null and not #strings.isEmpty(card.companyDescription)}">
+                                        Actively hiring qualified candidates through the placement portal.
+                                    </p>
+                                </div>
+                                
+                                <div class="mt-auto border-top pt-3 d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small fw-medium">
+                                        <span class="text-dark fw-bold" th:text="${card.openJobCount}">1</span> Active <span th:text="${card.openJobCount == 1 ? 'Job' : 'Jobs'}">Jobs</span>
+                                    </span>
+                                    <a th:href="@{/student/companies/{id}(id=${card.companyId})}" class="btn btn-sm btn-primary-premium rounded-pill px-4 fw-medium shadow-sm" style="transition: all 0.3s ease;">
+                                        View Jobs <i class="fa-solid fa-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State for JS Filtering -->
+                    <div id="noResults" class="text-center py-5 d-none">
+                        <div class="text-muted fs-5"><i class="fa-solid fa-magnifying-glass mb-3 fs-1 d-block"></i> No companies match your search.</div>
+                        <button id="clearFiltersBtn" class="btn btn-outline-primary mt-3 rounded-pill">Clear Filters</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const industryFilter = document.getElementById('industryFilter');
+            const resetBtn = document.getElementById('resetFilters');
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            const companyItems = document.querySelectorAll('.company-item');
+            const noResults = document.getElementById('noResults');
+            
+            // Populate Industry Dropdown dynamically
+            const industries = new Set();
+            companyItems.forEach(item => {
+                const card = item.querySelector('.company-card');
+                if (card && card.dataset.industry) {
+                    const ind = card.dataset.industry.trim();
+                    if (ind) industries.add(ind);
+                }
+            });
+            
+            industries.forEach(ind => {
+                const option = document.createElement('option');
+                option.value = ind;
+                option.textContent = ind;
+                industryFilter.appendChild(option);
+            });
+            
+            function filterCompanies() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const selectedIndustry = industryFilter.value;
+                let visibleCount = 0;
+                
+                companyItems.forEach(item => {
+                    const card = item.querySelector('.company-card');
+                    if (!card) return;
+                    
+                    const name = (card.dataset.name || '').toLowerCase();
+                    const industry = (card.dataset.industry || '').trim();
+                    const location = (card.dataset.location || '').toLowerCase();
+                    
+                    const matchesSearch = !searchTerm || name.includes(searchTerm) || industry.toLowerCase().includes(searchTerm) || location.includes(searchTerm);
+                    const matchesIndustry = !selectedIndustry || industry === selectedIndustry;
+                    
+                    if (matchesSearch && matchesIndustry) {
+                        item.classList.remove('d-none');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('d-none');
+                    }
+                });
+                
+                if (visibleCount === 0 && companyItems.length > 0) {
+                    noResults.classList.remove('d-none');
+                } else {
+                    noResults.classList.add('d-none');
+                }
+            }
+            
+            searchInput.addEventListener('input', filterCompanies);
+            industryFilter.addEventListener('change', filterCompanies);
+            
+            function resetAll() {
+                searchInput.value = '';
+                industryFilter.value = '';
+                filterCompanies();
+            }
+            
+            resetBtn.addEventListener('click', resetAll);
+            if (clearBtn) clearBtn.addEventListener('click', resetAll);
+        });
+    </script>
+</body>
+</html>

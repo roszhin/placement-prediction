@@ -1,0 +1,102 @@
+/* Premium Game-Inspired Loader Overlay */
+#global-loader {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 999999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.4s ease, visibility 0.4s;
+    opacity: 1;
+    visibility: visible;
+}
+#global-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Center Card */
+.loader-card {
+    width: 280px;
+    height: 170px;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeScaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeScaleIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Running Track Area */
+.runner-track-area {
+    position: relative;
+    width: 220px;
+    height: 100px;
+    margin-bottom: 12px; /* Reduced margin slightly to fit the card */
+}
+.runner-gif {
+    position: absolute;
+    bottom: 10px; /* Leaves a tiny 2px gap above the 8px progress bar */
+    left: 0%;
+    width: 95px; /* Increased size to 95px */
+    height: auto;
+    max-height: 90px;
+    transform: translateX(-50%); /* Centers the sprite over the percentage line */
+    transition: left 0.1s linear;
+    z-index: 2;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 220px;
+    height: 8px;
+    background: #E5E7EB;
+    border-radius: 4px;
+    overflow: hidden;
+    z-index: 1;
+}
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #F59E0B, #FDBA74);
+    border-radius: 4px;
+    transition: width 0.1s linear;
+}
+
+/* Fading Text */
+.loader-text-wrapper {
+    position: relative;
+    width: 220px;
+    height: 20px;
+    text-align: center;
+}
+.loader-text {
+    position: absolute;
+    width: 100%;
+    left: 0; top: 0;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+.loader-text.active {
+    opacity: 1;
+}

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Details - Skill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <script src="/js/app-dialog.js"></script>
+    <style>
+        .company-logo-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            object-fit: cover;
+            background: white;
+            padding: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .detail-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .detail-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(13,202,240,0.1);
+            color: var(--info-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border: 4px solid var(--success-color);
+            margin: 0 auto;
+        }
+        
+        /* Loading Overlay */
+        #loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(18, 18, 18, 0.9);
+            z-index: 999;
+            border-radius: 12px;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .scanner-bar {
+            width: 80%;
+            height: 4px;
+            background: var(--info-color);
+            box-shadow: 0 0 15px var(--info-color);
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .scanner-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -50%; width: 50%; height: 100%;
+            background: #fff;
+            animation: scan 2s infinite linear;
+        }
+        @keyframes scan {
+            0% { left: -50%; }
+            100% { left: 100%; }
+        }
+        
+        .modal-custom {
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+    </style>
+
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+</head>
+<body data-theme="light" data-page-id="dashboard">
+        <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+        
+        <div class="dashboard-container container py-4" >
+            
+            <div th:if="${success}" class="alert alert-success border-success text-success mb-4 shadow-sm" style="border-radius: 12px;" th:text="${success}" ></div>
+            <div th:if="${error}" class="alert alert-danger border-danger text-danger mb-4 shadow-sm" style="border-radius: 12px;" th:text="${error}" ></div>
+
+            <div class="row" >
+                <!-- Main Job Details (Left) -->
+                <div class="col-md-8 mb-4">
+                    <div class="corporate-card p-4">
+                        <div class="d-flex align-items-center mb-4 border-bottom pb-4">
+                            <div th:if="${job.company.profilePicture != null}">
+                                <img th:src="${job.company.profilePicture}" class="company-logo-large me-4">
+                            </div>
+                            <div th:unless="${job.company.profilePicture != null}" class="company-logo-large me-4 d-flex justify-content-center align-items-center bg-secondary text-white fs-1">
+                                <i class="fa-solid fa-building"></i>
+                            </div>
+                                <div>
+                                    <h2 class="fw-bold mb-1 d-flex align-items-center gap-3">
+                                        <span th:text="${job.jobTitle}"></span>
+                                        <span th:unless="${job.isActive}" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 border border-danger border-opacity-25 fs-6 align-middle">Closed</span>
+                                    </h2>
+                                <h5 class="text-info mb-2"><i class="fa-solid fa-building me-2"></i><span th:text="${job.company.companyName}"></span></h5>
+                                <div class="text-muted small">
+                                    <span class="me-3"><i class="fa-solid fa-location-dot me-1"></i> <span th:text="${job.location}"></span></span>
+                                    <span class="me-3" th:if="${job.department != null}"><i class="fa-solid fa-layer-group me-1"></i> <span th:text="${job.department}"></span></span>
+                                    <span class="me-3"><i class="fa-solid fa-clock me-1"></i> Posted <span th:text="${#temporals.format(job.createdAt, 'dd MMM yyyy')}"></span></span>
+                                    <span th:if="${job.lastDateToApply != null}"><i class="fa-solid fa-calendar-xmark text-warning me-1"></i> Apply by <span th:text="${#temporals.format(job.lastDateToApply, 'dd MMM yyyy')}"></span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <!-- Salary -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="detail-corporate-card d-flex align-items-center h-100">
+                                    <div class="detail-icon bg-success bg-opacity-10 text-success"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                                    <div>
+                                        <div class="small text-muted text-uppercase fw-semibold">Salary Package</div>
+                                        <div class="fw-bold fs-6" th:text="${job.salaryLpa != null ? job.salaryLpa + ' LPA' : 'Not Specified'}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Employment Type -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="detail-corporate-card d-flex align-items-center h-100">
+                                    <div class="detail-icon bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-briefcase"></i></div>
+                                    <div>
+                                        <div class="small text-muted text-uppercase fw-semibold">Employment Type</div>
+                                        <div class="fw-bold fs-6" th:text="${job.employmentType != null ? job.employmentType : 'Full Time'}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Experience -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="detail-corporate-card d-flex align-items-center h-100">
+                                    <div class="detail-icon bg-info bg-opacity-10 text-info"><i class="fa-solid fa-star"></i></div>
+                                    <div>
+                                        <div class="small text-muted text-uppercase fw-semibold">Experience</div>
+                                        <div class="fw-bold fs-6" th:text="${job.experienceRequirement != null ? job.experienceRequirement : 'Fresher (0 Years)'}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Minimum CGPA -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="detail-corporate-card d-flex align-items-center h-100">
+                                    <div class="detail-icon bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-graduation-cap"></i></div>
+                                    <div>
+                                        <div class="small text-muted text-uppercase fw-semibold">Minimum CGPA</div>
+                                        <div class="fw-bold fs-6" th:text="${job.minimumCgpa != null && job.minimumCgpa > 0.0 ? job.minimumCgpa : 'No Minimum'}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Work Mode -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="detail-corporate-card d-flex align-items-center h-100">
+                                    <div class="detail-icon bg-secondary bg-opacity-10 text-secondary"><i class="fa-solid fa-laptop-house"></i></div>
+                                    <div>
+                                        <div class="small text-muted text-uppercase fw-semibold">Work Mode</div>
+                                        <div class="fw-bold fs-6" th:text="${job.workMode != null ? job.workMode : 'On-site'}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Vacancies -->
+                            <div class="col-md-6 col-lg-4">
+                                <div class="detail-corporate-card d-flex align-items-center h-100">
+                                    <div class="detail-icon bg-danger bg-opacity-10 text-danger"><i class="fa-solid fa-users"></i></div>
+                                    <div>
+                                        <div class="small text-muted text-uppercase fw-semibold">Vacancies</div>
+                                        <div class="fw-bold fs-6" th:text="${job.vacancies != null ? job.vacancies : 'Not Specified'}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">Job Description</h5>
+                        <div class="text-light opacity-75 mb-4" style="white-space: pre-wrap; line-height: 1.6;" th:text="${job.jobDescription}"></div>
+
+                        <th:block th:if="${job.responsibilities != null && !job.responsibilities.isEmpty()}">
+                            <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">Responsibilities</h5>
+                            <div class="text-light opacity-75 mb-4" style="white-space: pre-wrap; line-height: 1.6;" th:text="${job.responsibilities}"></div>
+                        </th:block>
+
+                        <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">Minimum Qualifications</h5>
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <span class="badge bg-primary py-2 px-3 fs-6" th:if="${job.minimumQualification != null && !job.minimumQualification.isEmpty()}" th:each="qual : ${#strings.arraySplit(job.minimumQualification, ',')}" th:text="${#strings.trim(qual)}"></span>
+                            <span class="text-muted fst-italic" th:if="${job.minimumQualification == null || job.minimumQualification.isEmpty()}">Not specified</span>
+                        </div>
+
+                        <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">Required Skills</h5>
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <span class="badge bg-secondary py-2 px-3 fs-6" th:if="${job.requiredSkills != null && !job.requiredSkills.isEmpty()}" th:each="skill : ${#strings.arraySplit(job.requiredSkills, ',')}" th:text="${#strings.trim(skill)}"></span>
+                            <span class="text-muted fst-italic" th:if="${job.requiredSkills == null || job.requiredSkills.isEmpty()}">Not specified</span>
+                        </div>
+                        
+                        <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">Preferred Skills</h5>
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info py-2 px-3 fs-6" th:if="${job.preferredSkills != null && !job.preferredSkills.isEmpty()}" th:each="pskill : ${#strings.arraySplit(job.preferredSkills, ',')}" th:text="${#strings.trim(pskill)}"></span>
+                            <span class="text-muted fst-italic" th:if="${job.preferredSkills == null || job.preferredSkills.isEmpty()}">Not specified</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Prediction & Action Panel (Right) -->
+                <div class="col-md-4">
+                    <div class="corporate-card p-4 sticky-top">
+                        
+                        <!-- Toast Container for Notifications -->
+                        <div class="position-fixed w-100" style="top: 20px; left: 0; z-index: 1050; display: none; padding: 0 20px;" id="toastContainer">
+                            <div class="alert bg-success bg-opacity-75 border border-success text-white text-center py-2 shadow-lg w-50 mx-auto" id="toastMessage"></div>
+                        </div>
+                        <!-- Loading Overlay -->
+                        <div id="loading-overlay">
+                            <i class="fa-solid fa-robot fa-3x text-info mb-3 fa-bounce"></i>
+                            <h5 class="text-light mb-3 text-center">AI is analyzing your profile<br>& reading your resume...</h5>
+                            <div class="scanner-bar"></div>
+                            <p class="text-muted small mt-3">This takes a few seconds.</p>
+                        </div>
+
+                        <!-- Analysis Panel -->
+                        <div id="analysisPanel">
+                            
+                            <h5 class="text-center text-info mb-3"><i class="fa-solid fa-chart-pie me-2"></i>AI Analysis Results</h5>
+                            
+                            <div id="overallCircle" class="score-circle mb-4" th:style="${aiAnalysis != null && aiAnalysis.overallMatch != null ? (aiAnalysis.overallMatch >= 90 ? 'border-color: var(--success-color);' : (aiAnalysis.overallMatch >= 70 ? 'border-color: var(--info-color);' : (aiAnalysis.overallMatch >= 50 ? 'border-color: var(--warning-color);' : 'border-color: var(--danger-color);'))) : 'border-color: var(--info-color);'}">
+                                <h2 class="text-light m-0 fw-bold" id="overallScoreText" th:text="${aiAnalysis != null && aiAnalysis.overallMatch != null ? (#numbers.formatInteger(aiAnalysis.overallMatch, 1) + '%') : '0%'}">0%</h2>
+                            </div>
+                            <h6 class="text-center mb-4 text-light">Overall Job Match</h6>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="small text-muted">Skill Match Score</span>
+                                    <span class="small text-light fw-bold" id="skillScoreText" th:text="${aiAnalysis != null && aiAnalysis.skillMatchScore != null ? (#numbers.formatInteger(aiAnalysis.skillMatchScore, 1) + '%') : '0%'}">0%</span>
+                                </div>
+                                <div class="progress mt-2" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                    <div class="progress-bar" id="skillScoreBar" role="progressbar" th:style="'width: ' + (${aiAnalysis != null && aiAnalysis.skillMatchScore != null ? aiAnalysis.skillMatchScore : 0}) + '%'" style="background-color: var(--info-color);"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="small text-muted">Eligibility Score</span>
+                                    <span class="small text-light fw-bold" id="eligibilityScoreText" th:text="${aiAnalysis != null && aiAnalysis.eligibilityScore != null ? (#numbers.formatInteger(aiAnalysis.eligibilityScore, 1) + '%') : '0%'}">0%</span>
+                                </div>
+                                <div class="progress mt-2" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                    <div class="progress-bar" id="eligibilityScoreBar" role="progressbar" th:style="'width: ' + (${aiAnalysis != null && aiAnalysis.eligibilityScore != null ? aiAnalysis.eligibilityScore : 0}) + '%'" style="background-color: var(--success-color);"></div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic JSON Content (Visible when aiAnalysis exists) -->
+                            <div id="dynamicAIContent" th:style="${aiAnalysis != null ? 'display:block;' : 'display:none;'}">
+                                <h6 class="text-success small fw-bold text-uppercase mt-4"><i class="fa-solid fa-circle-check me-2"></i>Matched Skills</h6>
+                                <ul class="text-light small opacity-75 ps-3 mb-3" id="matchedSkillsList">
+                                    <th:block th:if="${aiDetails != null && aiDetails.matchedSkills != null}">
+                                        <li th:each="skill : ${aiDetails.matchedSkills}"><i class="fa-solid fa-check text-success me-2"></i> <span th:text="${skill}"></span></li>
+                                    </th:block>
+                                </ul>
+
+                                <h6 class="text-danger small fw-bold text-uppercase"><i class="fa-solid fa-circle-xmark me-2"></i>Missing Skills</h6>
+                                <ul class="text-light small opacity-75 ps-3 mb-3" id="missingSkillsList">
+                                    <th:block th:if="${aiDetails != null && aiDetails.missingSkills != null}">
+                                        <li th:each="skill : ${aiDetails.missingSkills}"><i class="fa-solid fa-xmark text-danger me-2"></i> <span th:text="${skill}"></span></li>
+                                    </th:block>
+                                    <th:block th:if="${aiDetails == null && aiAnalysis != null && aiAnalysis.missingSkills != null && !aiAnalysis.missingSkills.isEmpty()}">
+                                        <li th:each="skill : ${#strings.arraySplit(aiAnalysis.missingSkills, ',')}"><i class="fa-solid fa-xmark text-danger me-2"></i> <span th:text="${#strings.trim(skill)}"></span></li>
+                                    </th:block>
+                                </ul>
+                                
+                                <div class="p-3 mb-4 rounded">
+                                    <h6 class="text-info small fw-bold text-uppercase"><i class="fa-solid fa-lightbulb me-2"></i>Recommendation</h6>
+                                    <p class="text-light small mb-0" id="recommendationText" 
+                                       th:text="${recommendationText != null ? recommendationText : 'Analysis not available.'}">
+                                    </p>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary mb-4">
+
+                            <button type="button" id="analyzeBtn" class="btn btn-info w-100 py-3 fw-bold fs-5 shadow-lg action-btn mb-3" style="border-radius: 12px;" onclick="analyzeResume()">
+                                <i class="fa-solid fa-magnifying-glass me-2"></i> <span th:text="${aiAnalysis != null ? 'Re-analyze Resume' : 'Analyze Resume'}">Analyze Resume</span>
+                            </button>
+                            
+                            <!-- Unapplied / Predicted State -->
+                            <div id="unappliedPanel" th:style="${isApplied ? 'display: none;' : 'display: block;'}">
+                                <form th:action="@{/student/jobs/{jobId}/apply(jobId=${job.id})}" method="post" id="applyForm">
+                                    <button th:if="${job.isActive}" type="submit" class="btn-primary-premium w-100 py-3 fw-bold fs-5 shadow-lg action-btn" style="border-radius: 12px;" id="applyButton"><i class="fa-solid fa-paper-plane me-2"></i> Apply Now</button>
+                                    <button th:unless="${job.isActive}" type="button" class="btn btn-secondary w-100 py-3 fw-bold fs-5 shadow-sm" style="border-radius: 12px; cursor: not-allowed;" disabled><i class="fa-solid fa-lock me-2"></i> Applications Closed</button>
+                                </form>
+                            </div>
+
+                            <!-- Applied State -->
+                            <div id="appliedPanel" th:style="${!isApplied ? 'display: none;' : 'display: block;'}">
+                                <div class="alert alert-success border-success text-center mb-3 fw-bold" data-no-toast="true">
+                                    <i class="fa-solid fa-circle-check me-2"></i> ✓ Applied
+                                </div>
+                                <a th:if="${application != null && application.id != null}" th:href="@{/student/application/{appId}/details(appId=${application.id})}" id="trackBtn" class="btn-outline-premium w-100 py-2 fw-bold mb-3 action-btn" style="border-radius: 12px;"><i class="fa-solid fa-route me-2"></i> Track Application</a>
+
+                                <button type="button" class="btn-outline-premium text-danger w-100 py-2 fw-bold action-btn" style="border-radius: 12px;" onclick="confirmWithdrawApplication()"><i class="fa-solid fa-times me-2"></i> Withdraw Application</button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const jobId = /*[[${job.id}]]*/ 0;
+        /*]]>*/
+
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toastMsg = document.getElementById('toastMessage');
+            
+            toastMsg.textContent = message;
+            if (isError) {
+                toastMsg.classList.remove('bg-success', 'border-success', 'text-success');
+                toastMsg.classList.add('bg-danger', 'border-danger', 'text-danger');
+            } else {
+                toastMsg.classList.remove('bg-danger', 'border-danger', 'text-danger');
+                toastMsg.classList.add('bg-success', 'border-success', 'text-success');
+            }
+            
+            container.style.display = 'block';
+            setTimeout(() => {
+                container.style.display = 'none';
+            }, 5000);
+        }
+
+        function toggleActionButtons(disabled) {
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                if (btn) btn.disabled = disabled;
+            });
+        }
+
+        async function analyzeResume() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
+            
+            toggleActionButtons(true);
+            
+            try {
+                const response = await fetch(`/api/student/jobs/${jobId}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to analyze resume.');
+                }
+                
+                // Show Dynamic Content
+                const dynamicAIContent = document.getElementById('dynamicAIContent');
+                if (dynamicAIContent) dynamicAIContent.style.display = 'block';
+                
+                // Hide Analyze button
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                if (analyzeBtn) analyzeBtn.style.display = 'none';
+                
+                // Update Scores
+                animateValue('overallScoreText', data.overallMatch);
+                animateValue('skillScoreText', data.skillMatch);
+                animateValue('eligibilityScoreText', data.eligibilityScore);
+                
+                const skillScoreBar = document.getElementById('skillScoreBar');
+                if (skillScoreBar) skillScoreBar.style.width = data.skillMatch + '%';
+                
+                const eligibilityScoreBar = document.getElementById('eligibilityScoreBar');
+                if (eligibilityScoreBar) eligibilityScoreBar.style.width = data.eligibilityScore + '%';
+                
+                // Update colors based on overall match
+                const circle = document.getElementById('overallCircle');
+                if (circle) {
+                    if (data.overallMatch >= 90) circle.style.borderColor = 'var(--success-color)';
+                    else if (data.overallMatch >= 70) circle.style.borderColor = 'var(--info-color)';
+                    else if (data.overallMatch >= 50) circle.style.borderColor = 'var(--warning-color)';
+                    else circle.style.borderColor = 'var(--danger-color)';
+                }
+                
+                // Populate Skills
+                const matchedList = document.getElementById('matchedSkillsList');
+                if (matchedList) {
+                    matchedList.innerHTML = '';
+                    if (data.matchedSkills) {
+                        data.matchedSkills.forEach(skill => {
+                            matchedList.innerHTML += `<li><i class="fa-solid fa-check text-success me-2"></i> ${skill}</li>`;
+                        });
+                    }
+                }
+                
+                const missingList = document.getElementById('missingSkillsList');
+                if (missingList) {
+                    missingList.innerHTML = '';
+                    if (data.missingSkills) {
+                        data.missingSkills.forEach(skill => {
+                            missingList.innerHTML += `<li><i class="fa-solid fa-times text-danger me-2"></i> ${skill}</li>`;
+                        });
+                    }
+                }
+                
+                const recText = document.getElementById('recommendationText');
+                if (recText) recText.textContent = data.recommendation;
+                
+            } catch (error) {                showToast(error.message, true);
+            } finally {
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
+                toggleActionButtons(false);
+            }
+        }
+        
+        async function confirmWithdrawApplication() {
+            const confirmed = await AppDialog.confirm({
+                title: 'Withdraw Application?',
+                message: 'Are you sure you want to withdraw your application for this job?',
+                details: 'This action cannot be undone. You will be able to apply again if the job posting remains active.',
+                confirmText: 'Withdraw Application',
+                cancelText: 'Keep Application',
+                type: 'danger',
+                icon: 'paper-plane'
+            });
+            if (confirmed) {
+                await cancelApplication();
+            }
+        }
+        
+        async function cancelApplication() {
+            toggleActionButtons(true);
+            
+            try {
+                const response = await fetch(`/api/student/jobs/${jobId}/application`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to cancel application.');
+                }
+                
+                // Reset UI to unapplied State
+                const appliedPanel = document.getElementById('appliedPanel');
+                if (appliedPanel) appliedPanel.style.display = 'none';
+                
+                const unappliedPanel = document.getElementById('unappliedPanel');
+                if (unappliedPanel) unappliedPanel.style.display = 'block';
+                
+                const dynamicAIContent = document.getElementById('dynamicAIContent');
+                if (dynamicAIContent) dynamicAIContent.style.display = 'none';
+                
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                if (analyzeBtn) analyzeBtn.style.display = 'block';
+                
+                // Reset Scores
+                const overallScoreText = document.getElementById('overallScoreText');
+                if (overallScoreText) overallScoreText.textContent = '0%';
+                
+                const skillScoreText = document.getElementById('skillScoreText');
+                if (skillScoreText) skillScoreText.textContent = '0%';
+                
+                const eligibilityScoreText = document.getElementById('eligibilityScoreText');
+                if (eligibilityScoreText) eligibilityScoreText.textContent = '0%';
+                
+                const skillScoreBar = document.getElementById('skillScoreBar');
+                if (skillScoreBar) skillScoreBar.style.width = '0%';
+                
+                const eligibilityScoreBar = document.getElementById('eligibilityScoreBar');
+                if (eligibilityScoreBar) eligibilityScoreBar.style.width = '0%';
+                
+                const circle = document.getElementById('overallCircle');
+                if (circle) circle.style.borderColor = 'var(--info-color)';
+                
+                if (window.AppToast) {
+                    AppToast.success('Application withdrawn successfully.');
+                } else {
+                    showToast('Application cancelled successfully.');
+                }
+            } catch (error) {
+                if (window.AppToast) {
+                    AppToast.error(error.message);
+                } else {
+                    showToast(error.message, true);
+                }
+            } finally {
+                toggleActionButtons(false);
+            }
+        }
+        
+        // Helper to animate score numbers
+        function animateValue(id, end, duration = 1000) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.textContent = Math.floor(progress * end) + '%';
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

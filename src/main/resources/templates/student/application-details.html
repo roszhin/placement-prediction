@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Tracker - Skill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <style>
+        .company-logo-large {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: white;
+            padding: 4px;
+        }
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            list-style: none;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 30px;
+            width: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+            padding-left: 70px;
+        }
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+        .timeline-icon {
+            position: absolute;
+            left: 12px;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-color);
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px 20px;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+        
+        /* Active / Completed States */
+        .timeline-item.completed .timeline-icon {
+            border-color: var(--success-color);
+            background: var(--success-color);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(25, 135, 84, 0.5);
+        }
+        .timeline-item.completed .timeline-content {
+            opacity: 1;
+            border-color: rgba(25, 135, 84, 0.3);
+        }
+        
+        .timeline-item.active .timeline-icon {
+            border-color: var(--info-color);
+            background: var(--info-color);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(13, 202, 240, 0.5);
+            animation: pulse 2s infinite;
+        }
+        .timeline-item.active .timeline-content {
+            opacity: 1;
+            border-color: var(--info-color);
+            background: rgba(13, 202, 240, 0.05);
+        }
+
+        .timeline-item.rejected .timeline-icon {
+            border-color: var(--danger-color);
+            background: var(--danger-color);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(220, 53, 69, 0.5);
+        }
+        .timeline-item.rejected .timeline-content {
+            opacity: 1;
+            border-color: var(--danger-color);
+            background: rgba(220, 53, 69, 0.05);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(13, 202, 240, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
+        }
+    </style>
+
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+</head>
+<body data-theme="light" data-page-id="dashboard">
+        <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+        
+
+        <div class="dashboard-container container py-4" >
+            
+            <div class="row" >
+                
+                <!-- Left Column: App Summary & Scores -->
+                <div class="col-md-5 mb-4">
+                    <div class="corporate-card p-4 h-100">
+                        <div class="d-flex align-items-center mb-4 border-bottom pb-4">
+                            <div th:if="${company.profilePicture != null}">
+                                <img th:src="${company.profilePicture}" class="company-logo-large me-3">
+                            </div>
+                            <div th:unless="${company.profilePicture != null}" class="company-logo-large me-3 d-flex justify-content-center align-items-center bg-secondary text-white fs-3">
+                                <i class="fa-solid fa-building"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-1" th:text="${job.jobTitle}"></h4>
+                                <div class="text-info mb-1"><span th:text="${company.companyName}"></span></div>
+                                <div class="small text-muted"><i class="fa-solid fa-location-dot me-1"></i> <span th:text="${job.location}"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2">Application Details</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-light">Applied Date</span>
+                                <span class="text-info fw-bold" th:text="${#temporals.format(application.appliedAt, 'dd MMM yyyy')}"></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-light">Current Status</span>
+                                <span th:if="${application.status == 'APPLIED' || application.status == 'UNDER_REVIEW'}" class="badge-premium badge-warning">Under Review</span>
+                                <span th:if="${application.status == 'SHORTLISTED' || application.status == 'INTERVIEW_SCHEDULED'}" class="badge-premium badge-success">Shortlisted</span>
+                                <span th:if="${application.status == 'SELECTED'}" class="badge-premium badge-info">Selected</span>
+                                <span th:if="${application.status == 'REJECTED'}" class="badge-premium badge-danger">Rejected</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-light">Salary Package</span>
+                                <span class="text-light fw-bold" th:text="${job.packageOffered}"></span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded mb-4" >
+                            <h6 class="text-info text-center mb-3"><i class="fa-solid fa-robot me-2"></i>AI Assessment</h6>
+                            
+                            <div th:if="${aiAnalysis != null && aiAnalysis.overallMatch != null && aiAnalysis.overallMatch > 0}">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <span class="text-muted small text-uppercase fw-bold"><i class="fa-solid fa-bolt text-warning me-2"></i>Match Score</span>
+                                    <h4 class="m-0 fw-bold" th:classappend="${aiAnalysis.overallMatch >= 80 ? 'text-success' : (aiAnalysis.overallMatch >= 60 ? 'text-warning' : 'text-danger')}" th:text="${aiAnalysis.overallMatch + '%'}"></h4>
+                                </div>
+                                
+                                <!-- Detailed JSON AI Metrics -->
+                                <div th:if="${aiDetails != null}">
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="small text-muted">Technical Skill Match</span>
+                                            <span class="small text-light" th:text="${aiDetails.technicalSkillMatch != null ? aiDetails.technicalSkillMatch + '%' : '--'}"></span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                            <div class="progress-bar bg-info" role="progressbar" th:style="'width: ' + ${aiDetails.technicalSkillMatch != null ? aiDetails.technicalSkillMatch : 0} + '%'"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="small text-muted">Education Match</span>
+                                            <span class="small text-light" th:text="${aiDetails.educationMatch != null ? aiDetails.educationMatch + '%' : '--'}"></span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                            <div class="progress-bar bg-success" role="progressbar" th:style="'width: ' + ${aiDetails.educationMatch != null ? aiDetails.educationMatch : 0} + '%'"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="small text-muted">Experience Match</span>
+                                            <span class="small text-light" th:text="${aiDetails.experienceMatch != null ? aiDetails.experienceMatch + '%' : '--'}"></span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                            <div class="progress-bar bg-warning" role="progressbar" th:style="'width: ' + ${aiDetails.experienceMatch != null ? aiDetails.experienceMatch : 0} + '%'"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 text-center">
+                                        <span class="small text-muted">Interview Readiness</span>
+                                        <h5 class="fw-bold text-light mt-1" th:text="${aiDetails.interviewReadiness != null ? aiDetails.interviewReadiness : 'Not Available'}"></h5>
+                                    </div>
+                                </div>
+
+                                <!-- Fallback UI -->
+                                <div th:if="${aiDetails == null}">
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="small text-muted">Skill Match</span>
+                                            <span class="small text-light" th:text="${aiAnalysis.skillMatchScore != null ? aiAnalysis.skillMatchScore + '%' : '--'}"></span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                            <div class="progress-bar bg-info" role="progressbar" th:style="'width: ' + ${aiAnalysis.skillMatchScore != null ? aiAnalysis.skillMatchScore : 0} + '%'"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="small text-muted">Eligibility Score</span>
+                                            <span class="small text-light" th:text="${aiAnalysis.eligibilityScore != null ? aiAnalysis.eligibilityScore + '%' : '--'}"></span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                            <div class="progress-bar bg-warning" role="progressbar" th:style="'width: ' + ${aiAnalysis.eligibilityScore != null ? aiAnalysis.eligibilityScore : 0} + '%'"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Analysis Pending State -->
+                            <div th:if="${aiAnalysis == null || aiAnalysis.overallMatch == null || aiAnalysis.overallMatch == 0.0}" class="text-center py-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3 text-start">
+                                    <span>Overall Match</span>
+                                    <h4 class="m-0 fw-bold text-muted">--</h4>
+                                </div>
+                                <i class="fa-solid fa-hourglass-half text-warning fs-1 mb-3"></i>
+                                <h5 class="fw-bold">Analysis Pending</h5>
+                                <p class="text-muted small mb-0">The AI has not analyzed this application yet. Check back later.</p>
+                            </div>
+                        </div>
+
+                        <a th:href="@{/student/job/{id}(id=${job.id})}" class="btn btn-outline-secondary w-100 mt-auto" style="border-radius: 12px;">View Full Job Details</a>
+                    </div>
+                </div>
+
+                <!-- Right Column: Timeline -->
+                <div class="col-md-7 mb-4">
+                    <div class="corporate-card p-4 h-100">
+                        <h4 class="fw-light mb-4 border-bottom pb-3"><i class="fa-solid fa-route text-primary me-2"></i> Application <span class="fw-bold">Tracker</span></h4>
+
+                        <!-- Define timeline states using Thymeleaf variables -->
+                        <ul class="timeline" th:with="status=${application.status}">
+                            
+                            <!-- 1. APPLIED -->
+                            <li class="timeline-item completed">
+                                <div class="timeline-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                                <div class="timeline-content">
+                                    <h5 class="fw-bold mb-1">Application Submitted</h5>
+                                    <p class="text-muted small mb-0">Your application has been received by <span th:text="${company.companyName}"></span>.</p>
+                                    <div class="text-success small mt-1"><i class="fa-solid fa-check me-1"></i> <span th:text="${#temporals.format(application.appliedAt, 'dd MMM yyyy, hh:mm a')}"></span></div>
+                                </div>
+                            </li>
+
+                            <!-- 2. UNDER REVIEW -->
+                            <li class="timeline-item" th:classappend="${status == 'APPLIED' || status == 'UNDER_REVIEW'} ? 'active' : 'completed'">
+                                <div class="timeline-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                                <div class="timeline-content">
+                                    <h5 class="fw-bold mb-1">Under Review</h5>
+                                    <p class="text-muted small mb-0">The HR team is currently reviewing your application and AI assessment scores.</p>
+                                    <div th:if="${status == 'APPLIED' && application.underReviewAt == null}" class="text-info small mt-1"><i class="fa-solid fa-spinner fa-spin me-1"></i> In Progress...</div>
+                                    <div th:if="${application.underReviewAt != null}" class="text-success small mt-1"><i class="fa-solid fa-check me-1"></i> <span th:text="${#temporals.format(application.underReviewAt, 'dd MMM yyyy, hh:mm a')}"></span></div>
+                                </div>
+                            </li>
+
+                            <!-- 3. SHORTLISTED -->
+                            <th:block th:if="${status != 'REJECTED'}">
+                                <li class="timeline-item" th:classappend="${status == 'SHORTLISTED' || status == 'INTERVIEW_SCHEDULED'} ? 'active' : (${status == 'SELECTED'} ? 'completed' : '')">
+                                    <div class="timeline-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                                    <div class="timeline-content">
+                                        <h5 class="fw-bold mb-1">Shortlisted / Interviewing</h5>
+                                        <p class="text-muted small mb-0">Congratulations! You have been shortlisted for further rounds.</p>
+                                        <div th:if="${(status == 'SHORTLISTED' || status == 'INTERVIEW_SCHEDULED') && application.shortlistedAt == null}" class="text-info small mt-1"><i class="fa-solid fa-spinner fa-spin me-1"></i> Awaiting Final Decision...</div>
+                                        <div th:if="${application.shortlistedAt != null}" class="text-success small mt-1"><i class="fa-solid fa-check me-1"></i> <span th:text="${#temporals.format(application.shortlistedAt, 'dd MMM yyyy, hh:mm a')}"></span></div>
+                                    </div>
+                                </li>
+
+                                <!-- 4. SELECTED -->
+                                <li class="timeline-item" th:classappend="${status == 'SELECTED'} ? 'completed' : ''">
+                                    <div class="timeline-icon"><i class="fa-solid fa-trophy"></i></div>
+                                    <div class="timeline-content">
+                                        <h5 class="fw-bold mb-1">Selected</h5>
+                                        <p class="text-muted small mb-0">You have been selected for this position! HR will contact you shortly.</p>
+                                        <div th:if="${status == 'SELECTED' && application.selectedAt != null}" class="text-success small mt-1"><i class="fa-solid fa-party-horn me-1"></i> <span th:text="${#temporals.format(application.selectedAt, 'dd MMM yyyy, hh:mm a')}"></span></div>
+                                    </div>
+                                </li>
+                            </th:block>
+
+                            <!-- ALTERNATE 3. REJECTED -->
+                            <th:block th:if="${status == 'REJECTED'}">
+                                <li class="timeline-item rejected">
+                                    <div class="timeline-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                                    <div class="timeline-content">
+                                        <h5 class="fw-bold mb-1 text-danger">Application Rejected</h5>
+                                        <p class="text-muted small mb-0">Unfortunately, the company decided to move forward with other candidates at this time.</p>
+                                        <div th:if="${application.rejectedAt != null}" class="text-danger small mt-1"><i class="fa-solid fa-xmark me-1"></i> <span th:text="${#temporals.format(application.rejectedAt, 'dd MMM yyyy, hh:mm a')}"></span></div>
+                                    </div>
+                                </li>
+                            </th:block>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

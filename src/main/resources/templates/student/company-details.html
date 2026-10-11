@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${company.companyName != null ? company.companyName + ' - Jobs' : 'Company Jobs - Roshin'}">Company Jobs - Roshin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+    <style>
+        .company-header-card {
+            background: white;
+            border-radius: 18px;
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            box-shadow: var(--bs-box-shadow-sm);
+        }
+        .company-header-logo {
+            width: 72px;
+            height: 72px;
+            min-width: 72px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+        .company-header-placeholder {
+            width: 72px;
+            height: 72px;
+            min-width: 72px;
+            border-radius: 16px;
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .job-card {
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--bs-box-shadow-sm);
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+            border-color: var(--primary-color);
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body data-theme="light" data-page-id="companies">
+
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            
+            <div class="page-content">
+                <div class="container-fluid py-4">
+                    
+                    <!-- Back Button -->
+                    <div class="mb-3 fade-in">
+                        <a th:href="@{/student/companies}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                            <i class="fa-solid fa-arrow-left me-1"></i> All Companies
+                        </a>
+                    </div>
+
+                    <!-- Company Header Card -->
+                    <div class="company-header-card mb-4 fade-in">
+                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-4">
+                            <div class="d-flex align-items-center gap-4">
+                                <div th:if="${company.profilePicture != null and not #strings.isEmpty(company.profilePicture)}">
+                                    <img th:src="${company.profilePicture}" alt="Company Logo" class="company-header-logo">
+                                </div>
+                                <div th:unless="${company.profilePicture != null and not #strings.isEmpty(company.profilePicture)}" class="company-header-placeholder">
+                                    <span th:text="${company.companyName != null and #strings.length(company.companyName) > 0 ? #strings.substring(company.companyName, 0, 1).toUpperCase() : 'C'}">C</span>
+                                </div>
+                                <div>
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                        <h2 class="fw-bold text-main mb-0" th:text="${company.companyName}">Company Name</h2>
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-bold border border-success border-opacity-25" style="font-size: 0.8rem;">
+                                            <i class="fa-solid fa-briefcase me-1"></i><span th:text="${#lists.size(jobs)}">0</span> Open <span th:text="${#lists.size(jobs) == 1 ? 'Job' : 'Jobs'}">Jobs</span>
+                                        </span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
+                                        <span th:if="${company.industry != null and not #strings.isEmpty(company.industry)}" class="badge bg-light text-secondary border px-3 py-1">
+                                            <i class="fa-solid fa-industry me-1 text-primary"></i> <span th:text="${company.industry}">Industry</span>
+                                        </span>
+                                        <span th:if="${company.address != null and not #strings.isEmpty(company.address)}" class="badge bg-light text-secondary border px-3 py-1">
+                                            <i class="fa-solid fa-location-dot me-1 text-primary"></i> <span th:text="${company.address}">Location</span>
+                                        </span>
+                                        <span th:if="${company.companySize != null and not #strings.isEmpty(company.companySize)}" class="badge bg-light text-secondary border px-3 py-1">
+                                            <i class="fa-solid fa-users me-1 text-primary"></i> <span th:text="${company.companySize}">Size</span>
+                                        </span>
+                                        <span th:if="${company.foundedYear != null and not #strings.isEmpty(company.foundedYear)}" class="badge bg-light text-secondary border px-3 py-1">
+                                            <i class="fa-regular fa-calendar me-1 text-primary"></i> Est. <span th:text="${company.foundedYear}">2015</span>
+                                        </span>
+                                        <a th:if="${company.website != null and not #strings.isEmpty(company.website)}" 
+                                           th:href="${company.website.startsWith('http') ? company.website : 'https://' + company.website}" 
+                                           target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" style="font-size: 0.8rem;">
+                                            <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Website
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mt-4 pt-3 border-top" th:if="${company.companyDescription != null and not #strings.isEmpty(company.companyDescription)}">
+                            <h6 class="fw-bold text-dark mb-2">About <span th:text="${company.companyName}">the Company</span></h6>
+                            <p class="text-muted mb-0" th:text="${company.companyDescription}">Company detailed description.</p>
+                        </div>
+                    </div>
+
+                    <!-- Open Positions Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+                        <div>
+                            <h4 class="fw-bold text-main mb-1">Open Positions</h4>
+                            <p class="text-muted small mb-0">Current active vacancies and placement opportunities.</p>
+                        </div>
+                    </div>
+
+                    <!-- Open Jobs Grid -->
+                    <div class="row g-4" id="jobContainer">
+                        <!-- Empty State: Zero Open Jobs -->
+                        <div th:if="${#lists.isEmpty(jobs)}" class="col-12 text-center py-5 fade-in">
+                            <div class="corporate-card p-5 text-center" style="max-width: 600px; margin: 0 auto;">
+                                <i class="fa-solid fa-folder-open text-warning fs-1 mb-3"></i>
+                                <h5 class="fw-bold text-main mb-2">No Active Positions</h5>
+                                <p class="text-muted mb-4">This company does not have any open vacancies at the moment. Explore open roles at other partner companies.</p>
+                                <a th:href="@{/student/companies}" class="btn btn-primary-premium rounded-pill px-4">
+                                    <i class="fa-solid fa-building me-2"></i>Browse Other Companies
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Job Cards -->
+                        <div class="col-md-6 col-lg-4 job-item fade-in" th:each="job, iterStat : ${jobs}" th:style="'animation-delay: ' + (${iterStat.index} * 0.05 + 0.1) + 's;'">
+                            <div class="job-card p-4 h-100 d-flex flex-column">
+                                
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5 class="fw-bold mb-1 text-main text-truncate" style="max-width: 220px;" th:text="${job.jobTitle}">Job Title</h5>
+                                        <p class="text-muted small mb-0" th:text="${job.department ?: (job.employmentType ?: 'Full-Time')}">Department</p>
+                                    </div>
+                                    <div class="ms-2 d-flex flex-column align-items-end gap-1">
+                                        <span th:if="${job.isActive}" class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-bold border border-success border-opacity-25" style="font-size: 0.75rem;">Open</span>
+                                        <span th:unless="${job.isActive}" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 fw-bold border border-danger border-opacity-25" style="font-size: 0.75rem;">Closed</span>
+                                        <span th:if="${appliedJobIds != null and appliedJobIds.contains(job.id)}" class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 fw-bold border border-primary border-opacity-25" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-circle-check me-1"></i>Applied
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4 flex-grow-1">
+                                    <p class="text-muted small mb-2" th:if="${not #strings.isEmpty(job.location)}">
+                                        <i class="fa-solid fa-location-dot me-2 text-primary"></i> <span th:text="${job.location}">Location</span>
+                                    </p>
+                                    <p class="text-muted small mb-3" th:if="${not #strings.isEmpty(job.packageOffered)}">
+                                        <i class="fa-solid fa-money-bill-wave me-2 text-primary"></i> <span th:text="${job.packageOffered}">Package</span>
+                                    </p>
+                                    <p class="text-muted small mb-2 line-clamp-2" th:if="${not #strings.isEmpty(job.eligibilityCriteria)}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        <strong class="text-dark">Eligibility:</strong> <span th:text="${job.eligibilityCriteria}">Criteria</span>
+                                    </p>
+                                    <p class="text-muted small mb-0 line-clamp-2" th:if="${not #strings.isEmpty(job.requiredSkills)}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        <strong class="text-dark">Skills:</strong> <span th:text="${job.requiredSkills}">Skills</span>
+                                    </p>
+                                </div>
+                                
+                                <div class="mt-auto border-top pt-3 d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small">
+                                        <i class="fa-regular fa-calendar me-1"></i> <span th:text="${#temporals.format(job.createdAt, 'dd MMM yyyy')}">Date</span>
+                                    </span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a th:href="@{/student/job/{id}(id=${job.id})}" class="btn btn-sm btn-primary-premium rounded-pill px-4 fw-medium shadow-sm" style="transition: all 0.3s ease;">
+                                            View Job
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

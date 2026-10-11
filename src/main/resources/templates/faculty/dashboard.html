@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Dashboard - Skill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+</head>
+<body data-theme="light" data-page-id="dashboard">
+        <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+        
+
+        <div class="dashboard-container container py-4" >
+            <div class="corporate-card mb-4" >
+                <h3 class="fw-light mb-2">Department <span class="fw-bold">Analytics</span></h3>
+                <p class="text-muted">Welcome to the faculty portal. You can view your students' progress here.</p>
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="p-3 border rounded border-secondary" >
+                            <h4 class="text-light" th:text="${studentCount != null ? studentCount : 0}">0</h4>
+                            <p class="text-muted mb-0">Total Students</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="p-3 border rounded border-secondary" >
+                            <h4 class="text-light" th:text="${companyCount != null ? companyCount : 0}">0</h4>
+                            <p class="text-muted mb-0">Total Companies</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" >
+                <div class="col-md-4 mb-4">
+                    <div class="corporate-card h-100 d-flex flex-column">
+                        <h4><i class="fa-solid fa-users text-info mb-3 fs-2"></i></h4>
+                        <h5 class="text-light">Manage Students</h5>
+                        <p class="text-muted flex-grow-1">Add, edit, or remove students from the system.</p>
+                        <a th:href="@{/faculty/students}" class="btn-outline-premium w-100" style="border-radius: 12px;">Go to Students</a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="corporate-card h-100 d-flex flex-column">
+                        <h4><i class="fa-solid fa-building text-warning mb-3 fs-2"></i></h4>
+                        <h5 class="text-light">View Companies</h5>
+                        <p class="text-muted flex-grow-1">View registered companies and their details.</p>
+                        <a th:href="@{/faculty/companies}" class="btn btn-outline-warning w-100" style="border-radius: 12px;">View Companies</a>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="corporate-card h-100 d-flex flex-column">
+                        <h4><i class="fa-solid fa-user-gear text-success mb-3 fs-2"></i></h4>
+                        <h5 class="text-light">My Profile</h5>
+                        <p class="text-muted flex-grow-1">Update your personal details and change your password.</p>
+                        <a th:href="@{/faculty/profile}" class="btn-outline-premium text-success w-100" style="border-radius: 12px;">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+
+
+
+

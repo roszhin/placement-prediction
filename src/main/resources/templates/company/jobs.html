@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Jobs - Company</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <script src="/js/app-dialog.js"></script>
+    <style>
+        .admin-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+            max-width: 1200px; 
+            margin: 0 auto;
+        }
+        .btn-add-primary {
+            background-color: #F59E0B;
+            color: #ffffff;
+            border: none;
+            border-radius: 50rem;
+            padding: 10px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(245,158,11,0.2);
+        }
+        .btn-add-primary:hover {
+            background-color: #d97706;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245,158,11,0.3);
+        }
+        .admin-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        .admin-table th {
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 16px 20px;
+            border-bottom: 2px solid #F3F4F6;
+            cursor: pointer;
+            user-select: none;
+        }
+        .admin-table th:hover {
+            color: #111827;
+            background: #F9FAFB;
+        }
+        .admin-table td {
+            padding: 16px 20px;
+            vertical-align: middle;
+            border-bottom: 1px solid #F3F4F6;
+            word-wrap: break-word;
+            color: #111827;
+        }
+        .admin-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        .admin-table tbody tr:hover {
+            background-color: #F9FAFB;
+        }
+        
+        /* Actions */
+        .action-btn-circle {
+            width: 42px !important;
+            height: 42px !important;
+            min-width: 42px !important;
+            min-height: 42px !important;
+            border-radius: 50% !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: none;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            padding: 0 !important;
+            margin: 0 !important;
+            cursor: pointer;
+        }
+        .action-btn-circle i {
+            font-size: 16px !important;
+            line-height: 1 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .action-btn-circle:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            color: #ffffff;
+        }
+        .btn-edit-circle { background-color: #F59E0B; }
+        .btn-delete-circle { background-color: #7f1d1d; } /* Dark Red */
+        .btn-close-circle { background-color: #EF4444; } /* Red */
+        .btn-open-circle { background-color: #10B981; } /* Green */
+        
+        .btn-view-apps {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 50rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn-view-apps:hover {
+            background-color: #3B82F6;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Status Badges */
+        .status-open {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10B981;
+            padding: 6px 12px;
+            border-radius: 50rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-closed {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+            padding: 6px 12px;
+            border-radius: 50rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Pagination & Search Controls */
+        .controls-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .entries-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            color: #4B5563;
+        }
+        .entries-select {
+            appearance: none;
+            background-color: #F8FAFC;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            height: 46px;
+            width: 80px;
+            padding: 0 24px 0 12px;
+            color: #111827;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+        .entries-select:focus {
+            outline: none;
+            border-color: #F59E0B;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+        .search-control {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+        }
+        .search-control i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9CA3AF;
+        }
+        .search-input {
+            width: 100%;
+            height: 46px;
+            padding: 10px 16px 10px 45px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            background: #F8FAFC;
+            transition: all 0.3s ease;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #F59E0B;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(245,158,11,0.1);
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination {
+            display: flex;
+            gap: 8px;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid #E5E7EB;
+            background: #ffffff;
+            color: #4B5563;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .page-btn:hover {
+            background: #F3F4F6;
+        }
+        .page-btn.active {
+            background: #F59E0B;
+            color: #ffffff;
+            border-color: #F59E0B;
+            box-shadow: 0 4px 10px rgba(245,158,11,0.2);
+        }
+
+        /* Modal Customization */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            background: #F8FAFC;
+            border-bottom: 1px solid #E5E7EB;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 24px;
+        }
+        
+    </style>
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+</head>
+<body data-theme="light" data-page-id="company-jobs">
+    <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+        
+                <div class="dashboard-container container py-4">
+                    <div class="admin-card">
+                        
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                            <div>
+                                <h3 class="fw-bold mb-1 text-dark">Manage Jobs</h3>
+                                <p class="text-muted mb-0">Create, edit and manage all your job postings.</p>
+                            </div>
+                            <a th:href="@{/company/job/create}" class="btn-add-primary text-decoration-none">
+                                <i class="fa-solid fa-plus me-2"></i> Post New Job
+                            </a>
+                        </div>
+
+                        <div th:if="${success}" class="alert alert-success border-success text-success" th:text="${success}"></div>
+                        <div th:if="${error}" class="alert alert-danger border-danger text-danger" th:text="${error}"></div>
+
+                        <!-- Controls -->
+                        <div class="controls-wrapper">
+                            <div class="entries-control">
+                                Show 
+                                <select class="entries-select" id="entriesSelect">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                entries
+                            </div>
+                            <div class="search-control">
+                                <i class="fa-solid fa-search"></i>
+                                <input type="text" class="search-input" id="searchInput" placeholder="Search jobs...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="admin-table" id="jobsTable">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" style="width: 18%;">Job Title</th>
+                                        <th class="sortable" style="width: 15%;">Location</th>
+                                        <th class="sortable" style="width: 12%;">Package</th>
+                                        <th class="sortable" style="width: 12%;">Applications</th>
+                                        <th class="sortable" style="width: 10%;">Status</th>
+                                        <th class="sortable" style="width: 13%;">Posted Date</th>
+                                        <th style="width: 20%;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <tr th:each="job : ${jobs}" class="data-row">
+                                        <td class="fw-bold" th:text="${job.jobTitle}"></td>
+                                        <td th:text="${job.location != null ? job.location : 'Not specified'}"></td>
+                                        <td th:text="${job.packageOffered != null ? job.packageOffered : 'Not specified'}"></td>
+                                        <td>
+                                            <span class="badge bg-secondary rounded-pill px-3 py-2 fw-bold fs-6" th:text="${applicationCounts[job.id] + ' Apps'}"></span>
+                                        </td>
+                                        <td>
+                                            <span th:id="'status-badge-' + ${job.id}" th:classappend="${job.isActive ? 'status-open' : 'status-closed'}" th:text="${job.isActive ? 'Open' : 'Closed'}"></span>
+                                        </td>
+                                        <td th:text="${#temporals.format(job.createdAt, 'dd MMM yyyy')}"></td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <a th:href="@{/company/job/{jobId}/applicants(jobId=${job.id})}" class="btn-view-apps">
+                                                    View Apps
+                                                </a>
+                                                <a th:href="@{/company/job/{jobId}/edit(jobId=${job.id})}" class="action-btn-circle btn-edit-circle text-decoration-none" title="Edit Job">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </a>
+                                                <button type="button" class="action-btn-circle btn-toggle-status" 
+                                                        th:id="'btn-toggle-' + ${job.id}"
+                                                        th:classappend="${job.isActive ? 'btn-close-circle' : 'btn-open-circle'}"
+                                                        th:title="${job.isActive ? 'Close Job' : 'Reopen Job'}"
+                                                        th:data-job-id="${job.id}"
+                                                        th:data-is-active="${job.isActive}"
+                                                        th:data-title="${job.jobTitle}"
+                                                        th:data-deadline="${job.lastDateToApply}">
+                                                    <i class="fa-solid" th:id="'icon-toggle-' + ${job.id}" th:classappend="${job.isActive ? 'fa-lock' : 'fa-lock-open'}"></i>
+                                                </button>
+                                                <form th:action="@{/company/job/{id}/delete(id=${job.id})}" method="post" class="d-inline m-0"
+                                                      data-confirm="Are you sure you want to permanently delete this job posting?"
+                                                      data-confirm-title="Delete Job Posting?"
+                                                      data-confirm-details="All associated applications and candidate records will also be permanently removed. This cannot be undone."
+                                                      data-confirm-btn="Delete Job"
+                                                      data-confirm-cancel="Keep Job"
+                                                      data-confirm-type="danger">
+                                                    <button type="submit" class="action-btn-circle btn-delete-circle" title="Delete Job">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(jobs)}">
+                                        <td colspan="7" class="text-center text-muted py-5">
+                                            <i class="fa-solid fa-briefcase fa-3x mb-3 text-light-gray"></i>
+                                            <h5>No jobs found</h5>
+                                            <p>Click "Post New Job" to create your first vacancy.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Info -->
+                        <div class="pagination-container" th:if="${!#lists.isEmpty(jobs)}">
+                            <div class="text-muted small fw-medium" id="pageInfo">Showing 1 to 10 of XX entries</div>
+                            <ul class="pagination" id="pagination"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('jobsTable');
+            const tbody = document.getElementById('tableBody');
+            const rows = Array.from(tbody.querySelectorAll('.data-row'));
+            if(rows.length === 0) return;
+
+            const searchInput = document.getElementById('searchInput');
+            const entriesSelect = document.getElementById('entriesSelect');
+            const pagination = document.getElementById('pagination');
+            const pageInfo = document.getElementById('pageInfo');
+            
+            let currentPage = 1;
+            let rowsPerPage = parseInt(entriesSelect.value);
+            let filteredRows = [...rows];
+            let currentSortCol = -1;
+            let currentSortAsc = true;
+
+            function renderTable() {
+                tbody.innerHTML = '';
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                const paginatedRows = filteredRows.slice(start, end);
+                
+                paginatedRows.forEach(row => tbody.appendChild(row));
+                
+                const total = filteredRows.length;
+                if(total === 0) {
+                    pageInfo.textContent = 'Showing 0 to 0 of 0 entries';
+                } else {
+                    pageInfo.textContent = `Showing ${start + 1} to ${Math.min(end, total)} of ${total} entries`;
+                }
+                
+                renderPagination(total);
+            }
+
+            function renderPagination(totalRows) {
+                pagination.innerHTML = '';
+                const totalPages = Math.ceil(totalRows / rowsPerPage);
+                if(totalPages <= 1) return;
+                
+                for(let i = 1; i <= totalPages; i++) {
+                    const li = document.createElement('li');
+                    const btn = document.createElement('button');
+                    btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                    btn.textContent = i;
+                    btn.onclick = () => {
+                        currentPage = i;
+                        renderTable();
+                    };
+                    li.appendChild(btn);
+                    pagination.appendChild(li);
+                }
+            }
+
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                filteredRows = rows.filter(row => {
+                    return row.textContent.toLowerCase().includes(term);
+                });
+                currentPage = 1;
+                renderTable();
+            });
+
+            entriesSelect.addEventListener('change', (e) => {
+                rowsPerPage = parseInt(e.target.value);
+                currentPage = 1;
+                renderTable();
+            });
+
+            // Sorting logic
+            const headers = table.querySelectorAll('th.sortable');
+            headers.forEach((th, index) => {
+                th.addEventListener('click', () => {
+                    const colIndex = index; 
+                    if(currentSortCol === colIndex) {
+                        currentSortAsc = !currentSortAsc;
+                    } else {
+                        currentSortCol = colIndex;
+                        currentSortAsc = true;
+                    }
+                    
+                    filteredRows.sort((a, b) => {
+                        const aText = a.cells[colIndex].textContent.trim();
+                        const bText = b.cells[colIndex].textContent.trim();
+                        
+                        // Handle Date sorting (col 5)
+                        if(colIndex === 5) {
+                            return currentSortAsc 
+                                ? new Date(aText) - new Date(bText)
+                                : new Date(bText) - new Date(aText);
+                        }
+                        
+                        // Numeric sort fallback
+                        const aNum = parseFloat(aText.replace(/[^0-9.-]+/g,""));
+                        const bNum = parseFloat(bText.replace(/[^0-9.-]+/g,""));
+                        
+                        if(!isNaN(aNum) && !isNaN(bNum)) {
+                            return currentSortAsc ? aNum - bNum : bNum - aNum;
+                        }
+                        
+                        return currentSortAsc 
+                            ? aText.localeCompare(bText) 
+                            : bText.localeCompare(aText);
+                    });
+                    
+                    renderTable();
+                });
+            });
+
+            // Initial render
+            renderTable();
+
+            // Toggle Status Logic with AppDialog & AppToast
+            document.body.addEventListener('click', async function(e) {
+                const btn = e.target.closest('.btn-toggle-status');
+                if (!btn) return;
+                
+                const jobId = btn.getAttribute('data-job-id');
+                const isActive = btn.getAttribute('data-is-active') === 'true';
+                const jobTitle = btn.getAttribute('data-title') || 'this job';
+                const deadlineStr = btn.getAttribute('data-deadline');
+                
+                if (isActive) {
+                    // Close Job scenario
+                    const confirmed = await AppDialog.confirm({
+                        title: 'Close Job Posting?',
+                        message: `Are you sure you want to close "${jobTitle}"?`,
+                        details: 'Students will no longer be able to submit new applications.',
+                        confirmText: 'Close Job',
+                        cancelText: 'Keep Open',
+                        type: 'danger',
+                        icon: 'lock'
+                    });
+                    if (confirmed) {
+                        submitToggleStatus(jobId, false);
+                    }
+                } else {
+                    // Reopen Job scenario
+                    let isExpired = false;
+                    if (deadlineStr) {
+                        const deadlineDate = new Date(deadlineStr);
+                        if (deadlineDate < new Date()) {
+                            isExpired = true;
+                        }
+                    }
+                    
+                    if (isExpired) {
+                        const confirmed = await AppDialog.confirm({
+                            title: 'Deadline Expired',
+                            message: `The application deadline for "${jobTitle}" has passed. Would you like to extend the deadline and reopen the job?`,
+                            details: 'Choosing "Extend & Reopen" will update the deadline to allow new applicants.',
+                            confirmText: 'Extend & Reopen',
+                            cancelText: 'Cancel',
+                            type: 'warning',
+                            icon: 'clock-rotate-left'
+                        });
+                        if (confirmed) {
+                            submitToggleStatus(jobId, true);
+                        }
+                    } else {
+                        const confirmed = await AppDialog.confirm({
+                            title: 'Reopen Job Posting?',
+                            message: `Reopen "${jobTitle}" for new student applications?`,
+                            confirmText: 'Reopen Job',
+                            cancelText: 'Cancel',
+                            type: 'success',
+                            icon: 'lock-open'
+                        });
+                        if (confirmed) {
+                            submitToggleStatus(jobId, false);
+                        }
+                    }
+                }
+            });
+            
+            window.submitToggleStatus = function(jobId, extendDeadline) {
+                const csrfToken = document.querySelector('input[name="_csrf"]')?.value || ''; // Fallback if no csrf
+                
+                fetch(`/company/job/${jobId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ extendDeadline: extendDeadline })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI instantly
+                        const badge = document.getElementById(`status-badge-${jobId}`);
+                        const btn = document.getElementById(`btn-toggle-${jobId}`);
+                        const icon = document.getElementById(`icon-toggle-${jobId}`);
+                        
+                        const newStatus = data.isActive;
+                        
+                        // Update Badge
+                        badge.className = newStatus ? 'status-open' : 'status-closed';
+                        badge.textContent = newStatus ? 'Open' : 'Closed';
+                        
+                        // Update Button
+                        btn.setAttribute('data-is-active', newStatus);
+                        btn.className = `action-btn-circle btn-toggle-status ${newStatus ? 'btn-close-circle' : 'btn-open-circle'}`;
+                        btn.setAttribute('title', newStatus ? 'Close Job' : 'Reopen Job');
+                        
+                        // Update Icon
+                        icon.className = `fa-solid ${newStatus ? 'fa-lock' : 'fa-lock-open'}`;
+
+                        if (window.AppToast) {
+                            AppToast.success(newStatus ? 'Job reopened successfully!' : 'Job closed successfully.');
+                        }
+                    } else {
+                        if (window.AppToast) {
+                            AppToast.error(data.error || 'Failed to toggle status.');
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (window.AppToast) {
+                        AppToast.error('An unexpected error occurred while updating status.');
+                    }
+                });
+            };
+            
+            // Generate CSRF token input dynamically if missing, to ensure fetch works
+            // Spring Security requires CSRF for POST. We can fetch it from a meta tag or an existing form.
+            if (!document.querySelector('meta[name="_csrf"]')) {
+                // If there's a delete form, it has the CSRF token
+                const anyForm = document.querySelector('form');
+                if (anyForm && anyForm.querySelector('input[name="_csrf"]')) {
+                    const token = anyForm.querySelector('input[name="_csrf"]').value;
+                    const meta = document.createElement('meta');
+                    meta.name = '_csrf';
+                    meta.content = token;
+                    document.head.appendChild(meta);
+                }
+            }
+            
+            // Overwrite fetch to always include CSRF if available in meta tag
+            const originalFetch = window.fetch;
+            window.fetch = function() {
+                let [resource, config] = arguments;
+                if(config === undefined) {
+                    config = {};
+                }
+                if(config.headers === undefined) {
+                    config.headers = {};
+                }
+                const csrfMeta = document.querySelector('meta[name="_csrf"]');
+                if(csrfMeta) {
+                    config.headers['X-CSRF-TOKEN'] = csrfMeta.content;
+                }
+                return originalFetch(resource, config);
+            };
+        });
+    </script>
+</body>
+</html>

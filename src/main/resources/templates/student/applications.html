@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Applications - Skill</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
+    <link href="/css/saas-orange-theme.css" rel="stylesheet">
+    <style>
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing,
+        .dataTables_wrapper .dataTables_paginate { color: var(--text-color); }
+        .dataTables_wrapper .dataTables_filter input { background-color: transparent; color: var(--text-color); border: 1px solid var(--secondary-color); border-radius: 12px; }
+        .dataTables_wrapper .dataTables_length select { background-color: transparent; color: var(--text-color); border: 1px solid var(--secondary-color); border-radius: 12px; }
+        .page-link { background-color: transparent; border-color: var(--secondary-color); color: var(--text-color); }
+        .page-item.active .page-link { background-color: var(--secondary-color); border-color: var(--secondary-color); }
+        
+        .company-logo-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: white;
+            padding: 2px;
+        }
+    </style>
+
+    <link href="/css/loader.css" rel="stylesheet">
+    <script src="/js/loader.js"></script>
+</head>
+<body data-theme="light" data-page-id="dashboard">
+        <div class="app-layout">
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        <div class="main-content">
+            <div th:replace="~{fragments/topbar :: topbar}"></div>
+            <div class="page-content">
+        
+
+        <div class="dashboard-container container py-4" >
+            <div class="corporate-card" >
+                
+                <h4 class="fw-light mb-4 border-bottom pb-3"><i class="fa-solid fa-briefcase text-info me-2"></i> My <span class="fw-bold">Applications</span></h4>
+                
+                <div th:if="${success}" class="alert alert-success  border-success text-success" th:text="${success}"></div>
+                <div th:if="${error}" class="alert alert-danger  border-danger text-danger" th:text="${error}"></div>
+
+                <div class="table-responsive table-responsive-premium glass-table-container">
+                    <table id="applicationsTable" class="table glass-table-premium-hover align-middle" style="--bs-table-bg: transparent; --bs-table-color: var(--text-color); --bs--bg: rgba(255,255,255,0.05); --bs--color: var(--text-color); border-color: var(--border-color);">
+                        <thead>
+                            <tr>
+                                <th style="color: var(--text-muted); border-bottom-color: var(--border-color);">Company</th>
+                                <th style="color: var(--text-muted); border-bottom-color: var(--border-color);">Job Title</th>
+                                <th style="color: var(--text-muted); border-bottom-color: var(--border-color);">Applied Date</th>
+                                <th style="color: var(--text-muted); border-bottom-color: var(--border-color);">AI Score</th>
+                                <th style="color: var(--text-muted); border-bottom-color: var(--border-color);">Status</th>
+                                <th style="color: var(--text-muted); border-bottom-color: var(--border-color);">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="app : ${applications}">
+                                <td style="border-bottom-color: var(--border-color);">
+                                    <div class="d-flex align-items-center">
+                                        <div th:if="${app.job.company.profilePicture != null}">
+                                            <img th:src="${app.job.company.profilePicture}" class="company-logo-small me-2">
+                                        </div>
+                                        <div th:unless="${app.job.company.profilePicture != null}" class="company-logo-small me-2 d-flex justify-content-center align-items-center bg-secondary text-white">
+                                            <i class="fa-solid fa-building"></i>
+                                        </div>
+                                        <span class="fw-bold" th:text="${app.job.company.companyName}"></span>
+                                    </div>
+                                </td>
+                                <td th:text="${app.job.jobTitle}" style="border-bottom-color: var(--border-color);"></td>
+                                <td th:text="${#temporals.format(app.appliedAt, 'dd MMM yyyy')}" style="border-bottom-color: var(--border-color);"></td>
+                                <td style="border-bottom-color: var(--border-color);">
+                                    <th:block th:with="score=${aiScores.get(app.id)}">
+                                        <span th:if="${score != null}" class="fw-bold" th:classappend="${score >= 80 ? 'text-success' : (score >= 50 ? 'text-warning' : 'text-danger')}" th:text="${score.intValue() + '%'}"></span>
+                                        <span th:unless="${score != null}" class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-1 rounded-pill border border-secondary" style="font-weight: 500;">Not Analyzed</span>
+                                    </th:block>
+                                </td>
+                                <td style="border-bottom-color: var(--border-color);">
+                                    <span th:if="${app.status == 'APPLIED' || app.status == 'UNDER_REVIEW'}" class="badge-premium badge-warning">Under Review</span>
+                                    <span th:if="${app.status == 'SHORTLISTED' || app.status == 'INTERVIEW_SCHEDULED'}" class="badge-premium badge-success">Shortlisted</span>
+                                    <span th:if="${app.status == 'SELECTED'}" class="badge-premium badge-info">Selected</span>
+                                    <span th:if="${app.status == 'REJECTED'}" class="badge-premium badge-danger">Rejected</span>
+                                </td>
+                                <td style="border-bottom-color: var(--border-color);">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-color: var(--border-color); color: var(--text-color); border-radius: 12px;">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow" >
+                                            <li><a class="dropdown-item" th:href="@{/student/job/{id}(id=${app.job.id})}"><i class="fa-solid fa-building me-2 text-info"></i> View Job</a></li>
+                                            <li><a th:if="${app.id != null}" class="dropdown-item" th:href="@{/student/application/{id}/details(id=${app.id})}"><i class="fa-solid fa-chart-line me-2 text-primary"></i> Track Application</a></li>
+                                            
+                                            <li th:if="${app.status == 'APPLIED' || app.status == 'UNDER_REVIEW'}"><hr class="dropdown-divider border-secondary"></li>
+                                            
+                                            <li th:if="${app.status == 'APPLIED' || app.status == 'UNDER_REVIEW'}">
+                                                <form th:action="@{/student/application/{id}/withdraw(id=${app.id})}" method="POST" class="d-inline"
+                                                      data-confirm="Are you sure you want to withdraw this application?"
+                                                      data-confirm-title="Withdraw Application?"
+                                                      data-confirm-details="This action cannot be undone."
+                                                      data-confirm-btn="Withdraw"
+                                                      data-confirm-cancel="Cancel"
+                                                      data-confirm-type="danger">
+                                                    <button type="submit" class="dropdown-item text-danger"><i class="fa-solid fa-trash me-2"></i> Withdraw Application</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('#applicationsTable').DataTable({
+                "pageLength": 10,
+                "ordering": true,
+                "info": true,
+                "language": {
+                    "search": "_INPUT_",
+                    "searchPlaceholder": "Search applications..."
+                }
+            });
+        });
+    </script>
+</body>
+</html>

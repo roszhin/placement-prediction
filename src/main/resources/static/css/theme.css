@@ -1,0 +1,91 @@
+/* Global Theme Variables */
+:root {
+    --primary-red: #E23636;
+    --primary-red-glow: rgba(226, 54, 54, 0.6);
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Dark Theme (Default) */
+[data-bs-theme="dark"] {
+    --bg-color: #020617;
+    --text-color: #F8F9FA;
+    --text-muted: #8892B0;
+    --glass-bg: rgba(10, 25, 47, 0.4);
+    --navbar-bg: rgba(2, 6, 23, 0.8);
+    --card-bg: rgba(10, 25, 47, 0.4);
+    --input-bg: #112240;
+    --input-text: #F8F9FA;
+    --border-color: rgba(255, 255, 255, 0.1);
+    color-scheme: dark;
+}
+
+/* Light Theme */
+[data-bs-theme="light"] {
+    --bg-color: #F8F9FA;
+    --text-color: #212529;
+    --text-muted: #6C757D;
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --navbar-bg: rgba(255, 255, 255, 0.95);
+    --card-bg: #FFFFFF;
+    --input-bg: #FFFFFF;
+    --input-text: #212529;
+    --border-color: rgba(0, 0, 0, 0.1);
+    color-scheme: light;
+}
+
+body {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.glass-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+.navbar-glass {
+    background: var(--navbar-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.navbar-brand, .nav-link {
+    color: var(--text-color) !important;
+}
+
+.form-control, .form-select {
+    background-color: var(--input-bg) !important;
+    color: var(--input-text) !important;
+    border-color: var(--border-color) !important;
+}
+
+.table {
+    color: var(--text-color) !important;
+    --bs-table-bg: transparent !important;
+}
+
+.table-hover tbody tr:hover {
+    color: var(--text-color) !important;
+}
+
+/* Theme Toggle Button Styles */
+.theme-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s;
+}
+.theme-toggle-btn:hover {
+    color: var(--primary-red);
+}

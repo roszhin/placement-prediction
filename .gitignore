@@ -1,0 +1,5 @@
+﻿**/application.properties
+**/target/
+**/node_modules/
+jdk*/
+/jdk.zip

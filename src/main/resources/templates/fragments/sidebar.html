@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+    <div th:fragment="sidebar" class="sidebar floating-sidebar">
+        <div class="brand text-main d-flex align-items-center" style="cursor: default;">
+            <div class="brand-icon me-2">
+                <i class="fa-solid fa-layer-group text-primary"></i>
+            </div>
+            <span class="fw-bold fs-5">Roshin</span>
+        </div>
+        
+        <!-- Student Sidebar -->
+        <ul class="sidebar-menu mt-4" sec:authorize="hasAuthority('ROLE_STUDENT')">
+            <li><a th:href="@{/student/dashboard}" th:classappend="${currentUri != null and currentUri.startsWith('/student/dashboard') ? 'active' : ''}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a th:href="@{/student/jobs}" th:classappend="${currentUri != null and (currentUri == '/student/jobs' or currentUri.startsWith('/student/job/')) ? 'active' : ''}"><i class="fa-solid fa-briefcase"></i> Available Jobs</a></li>
+            <li><a th:href="@{/student/companies}" th:classappend="${currentUri != null and currentUri.startsWith('/student/compan') ? 'active' : ''}"><i class="fa-solid fa-building"></i> Companies</a></li>
+            <li><a th:href="@{/student/jobs/matched}" th:classappend="${currentUri != null and currentUri.startsWith('/student/jobs/matched') ? 'active' : ''}"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Job Match</a></li>
+            <li><a th:href="@{/student/applications}" th:classappend="${currentUri != null and currentUri.startsWith('/student/application') ? 'active' : ''}"><i class="fa-solid fa-paper-plane"></i> Applications</a></li>
+            <li><a th:href="@{/student/profile}" th:classappend="${currentUri != null and currentUri.startsWith('/student/profile') ? 'active' : ''}"><i class="fa-solid fa-user"></i> My Profile</a></li>
+        </ul>
+
+        <!-- Company Sidebar -->
+        <ul class="sidebar-menu mt-4" sec:authorize="hasAuthority('ROLE_COMPANY')">
+            <li><a th:href="@{/company/dashboard}" th:classappend="${currentUri != null and currentUri.startsWith('/company/dashboard') ? 'active' : ''}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a th:href="@{/company/jobs}" th:classappend="${currentUri != null and currentUri.startsWith('/company/job') ? 'active' : ''}"><i class="fa-solid fa-briefcase"></i> Manage Jobs</a></li>
+            <li><a th:href="@{/company/applicants}" th:classappend="${currentUri != null and currentUri.startsWith('/company/applicant') ? 'active' : ''}"><i class="fa-solid fa-users"></i> Applicants</a></li>
+            <li><a th:href="@{/company/profile}" th:classappend="${currentUri != null and currentUri.startsWith('/company/profile') ? 'active' : ''}"><i class="fa-solid fa-building"></i> My Profile</a></li>
+        </ul>
+
+        <!-- Admin Sidebar -->
+        <ul class="sidebar-menu mt-4" sec:authorize="hasAuthority('ROLE_ADMIN')">
+            <li><a th:href="@{/admin/dashboard}" th:classappend="${currentUri != null and currentUri.startsWith('/admin/dashboard') ? 'active' : ''}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a th:href="@{/admin/companies}" th:classappend="${currentUri != null and currentUri.startsWith('/admin/compan') ? 'active' : ''}"><i class="fa-solid fa-building"></i> Companies</a></li>
+            <li><a th:href="@{/admin/students}" th:classappend="${currentUri != null and currentUri.startsWith('/admin/student') ? 'active' : ''}"><i class="fa-solid fa-user-graduate"></i> Students</a></li>
+            <li><a th:href="@{/admin/faculty}" th:classappend="${currentUri != null and currentUri.startsWith('/admin/facult') ? 'active' : ''}"><i class="fa-solid fa-chalkboard-user"></i> Faculty</a></li>
+            <li><a th:href="@{/admin/profile}" th:classappend="${currentUri != null and currentUri.startsWith('/admin/profile') ? 'active' : ''}"><i class="fa-solid fa-user-shield"></i> Profile</a></li>
+        </ul>
+
+        <!-- Faculty Sidebar -->
+        <ul class="sidebar-menu mt-4" sec:authorize="hasAuthority('ROLE_FACULTY')">
+            <li><a th:href="@{/faculty/dashboard}" th:classappend="${currentUri != null and currentUri.startsWith('/faculty/dashboard') ? 'active' : ''}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a th:href="@{/faculty/companies}" th:classappend="${currentUri != null and currentUri.startsWith('/faculty/compan') ? 'active' : ''}"><i class="fa-solid fa-building"></i> Companies</a></li>
+            <li><a th:href="@{/faculty/students}" th:classappend="${currentUri != null and currentUri.startsWith('/faculty/student') ? 'active' : ''}"><i class="fa-solid fa-user-graduate"></i> Students</a></li>
+            <li><a th:href="@{/faculty/profile}" th:classappend="${currentUri != null and currentUri.startsWith('/faculty/profile') ? 'active' : ''}"><i class="fa-solid fa-user-tie"></i> Profile</a></li>
+        </ul>
+        
+        <div class="mt-auto">
+            <ul class="sidebar-menu">
+                <li>
+                    <form th:action="@{/logout}" method="post" class="m-0 w-100"
+                          data-confirm="Are you sure you want to sign out?"
+                          data-confirm-title="Sign Out?"
+                          data-confirm-btn="Sign Out"
+                          data-confirm-cancel="Stay"
+                          data-confirm-type="warning"
+                          data-confirm-icon="arrow-right-from-bracket">
+                        <button type="submit" class="logout-btn w-100 text-start">
+                            <i class="fa-solid fa-arrow-right-from-bracket me-3"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+        <script src="/js/app-dialog.js"></script>
+    </div>
+</body>
+</html>
