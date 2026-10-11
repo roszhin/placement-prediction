@@ -1,0 +1,8 @@
+.git/
+jdk/
+target/
+uploads/
+doc_generator/
+node_modules/
+**/node_modules/
+**/application.properties
