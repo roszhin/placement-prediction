@@ -1,7 +1,9 @@
 package com.roshin.placement.controller;
 
 import com.roshin.placement.service.AuthService;
+import com.roshin.placement.service.EmailDeliveryException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +28,10 @@ public class AuthRestController {
             response.put("status", "success");
             response.put("message", "OTP sent successfully to " + email);
             return ResponseEntity.ok(response);
+        } catch (EmailDeliveryException e) {
+            response.put("status", "error");
+            response.put("message", "OTP sending failed. Please try again later.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
         } catch (Exception e) {
             response.put("status", "error");
             response.put("message", e.getMessage());
