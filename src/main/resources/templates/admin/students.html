@@ -250,6 +250,36 @@
             color: #6B7280;
             font-weight: 600;
         }
+        #addStudentModal .modal-dialog,
+        [id^="editStudentModal"] .modal-dialog {
+            max-height: calc(100vh - 1rem);
+            max-height: calc(100dvh - 1rem);
+        }
+        #addStudentModal .modal-content,
+        [id^="editStudentModal"] .modal-content {
+            max-height: calc(100vh - 1rem);
+            max-height: calc(100dvh - 1rem);
+        }
+        .student-modal-form {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .student-modal-form .modal-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior-y: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        .student-modal-form .modal-footer {
+            flex-shrink: 0;
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
     </style>
 </head>
 <body data-theme="light" data-page-id="admin-students">
@@ -374,7 +404,7 @@
                     <h5 class="modal-title fw-bold text-dark">Add New Student</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <form th:action="@{/admin/students/add}" method="POST">
+                <form class="student-modal-form" th:action="@{/admin/students/add}" method="POST">
                     <div class="modal-body px-4 py-4">
                         <div class="mb-3">
                             <label class="form-label text-dark fw-medium">Full Name</label>
@@ -489,7 +519,7 @@
                     <h5 class="modal-title fw-bold text-dark">Edit Student</h5>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <form th:action="@{/admin/students/edit/{id}(id=${student.id})}" method="POST">
+                <form class="student-modal-form" th:action="@{/admin/students/edit/{id}(id=${student.id})}" method="POST">
                     <div class="modal-body px-4 py-4">
                         <div class="mb-3">
                             <label class="form-label text-dark fw-medium">Full Name</label>
