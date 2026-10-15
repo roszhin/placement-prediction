@@ -1,36 +1,31 @@
 package com.roshin.placement.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class EmailService {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+
     private final RestClient restClient;
 
-    @Value("${email.gmail.client-id:}")
-    private String clientId;
+    @Value("${email.resend.api-key:}")
+    private String apiKey;
 
-    @Value("${email.gmail.client-secret:}")
-    private String clientSecret;
-
-    @Value("${email.gmail.refresh-token:}")
-    private String refreshToken;
-
-    @Value("${email.gmail.from:}")
+    @Value("${email.resend.from:}")
     private String from;
 
     public EmailService() {
@@ -45,54 +40,33 @@ public class EmailService {
     }
 
     public void sendOtpEmail(String to, String otp) {
-        if (isBlank(clientId) || isBlank(clientSecret) || isBlank(refreshToken) || isBlank(from)
-                || containsLineBreak(from) || containsLineBreak(to)) {
+        if (isBlank(apiKey) || isBlank(from) || containsLineBreak(from) || containsLineBreak(to)) {
+            logger.warn("OTP email not sent: Resend configuration is missing or invalid");
             throw new EmailDeliveryException();
         }
+
+        Map<String, Object> message = Map.of(
+                "from", from,
+                "to", List.of(to),
+                "subject", "OTP for Skill Platform Registration",
+                "text", "Your OTP for registration is: " + otp + "\nThis OTP will expire in 5 minutes."
+        );
 
         try {
-            String accessToken = refreshAccessToken();
-            String rawMessage = "From: " + from + "\r\n"
-                    + "To: " + to + "\r\n"
-                    + "Subject: OTP for Skill Platform Registration\r\n"
-                    + "MIME-Version: 1.0\r\n"
-                    + "Content-Type: text/plain; charset=UTF-8\r\n\r\n"
-                    + "Your OTP for registration is: " + otp
-                    + "\nThis OTP will expire in 5 minutes.";
-            String encodedMessage = Base64.getUrlEncoder().withoutPadding()
-                    .encodeToString(rawMessage.getBytes(StandardCharsets.UTF_8));
-
             restClient.post()
-                    .uri("https://gmail.googleapis.com/gmail/v1/users/me/messages/send")
-                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .uri("https://api.resend.com/emails")
+                    .headers(headers -> headers.setBearerAuth(apiKey))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("raw", encodedMessage))
+                    .body(message)
                     .retrieve()
                     .toBodilessEntity();
+        } catch (RestClientResponseException ex) {
+            logger.warn("Resend rejected OTP email request with HTTP status {}", ex.getStatusCode().value());
+            throw new EmailDeliveryException();
         } catch (RestClientException ex) {
+            logger.warn("Could not connect to the Resend email API");
             throw new EmailDeliveryException();
         }
-    }
-
-    private String refreshAccessToken() {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("client_id", clientId);
-        form.add("client_secret", clientSecret);
-        form.add("refresh_token", refreshToken);
-        form.add("grant_type", "refresh_token");
-
-        Map<String, Object> tokenResponse = restClient.post()
-                .uri("https://oauth2.googleapis.com/token")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(form)
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
-
-        Object accessToken = tokenResponse == null ? null : tokenResponse.get("access_token");
-        if (!(accessToken instanceof String token) || token.isBlank()) {
-            throw new EmailDeliveryException();
-        }
-        return token;
     }
 
     private boolean isBlank(String value) {
