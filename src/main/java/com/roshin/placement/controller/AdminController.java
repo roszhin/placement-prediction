@@ -92,34 +92,83 @@ public class AdminController {
     }
 
     @PostMapping("/students/add")
-    public String addStudent(@ModelAttribute Student student, RedirectAttributes redirectAttributes) {
-        if (studentRepository.findByEmail(student.getEmail()).isPresent()) {
-            redirectAttributes.addFlashAttribute("error", "Email already exists!");
+    public String addStudent(@ModelAttribute Student student,
+                             @RequestParam String password,
+                             RedirectAttributes redirectAttributes) {
+        String email = student.getEmail() == null ? "" : student.getEmail().trim();
+        if (email.isEmpty() || student.getName() == null || student.getName().isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Name and email are required.");
             return "redirect:/admin/students";
         }
+        if (password == null || password.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "Set an initial password with at least 8 characters.");
+            return "redirect:/admin/students";
+        }
+        if (studentRepository.findByEmail(email).isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "A student with that email already exists.");
+            return "redirect:/admin/students";
+        }
+
         Role role = roleRepository.findByName("ROLE_STUDENT").orElse(null);
+        if (role == null) {
+            redirectAttributes.addFlashAttribute("error", "Student role is not configured.");
+            return "redirect:/admin/students";
+        }
+
+        student.setEmail(email);
         student.setRole(role);
         student.setActive(true);
-        student.setPassword(passwordEncoder.encode("student123")); // Default password
+        student.setPassword(passwordEncoder.encode(password));
         studentRepository.save(student);
-        redirectAttributes.addFlashAttribute("success", "Student added successfully! Default password: student123");
+        redirectAttributes.addFlashAttribute("success", "Student added successfully.");
         return "redirect:/admin/students";
     }
 
     @PostMapping("/students/edit/{id}")
-    public String editStudent(@PathVariable Long id, @ModelAttribute Student updated, RedirectAttributes redirectAttributes) {
+    public String editStudent(@PathVariable Long id,
+                              @ModelAttribute Student updated,
+                              @RequestParam(required = false) String newPassword,
+                              RedirectAttributes redirectAttributes) {
         Student student = studentRepository.findById(id).orElse(null);
-        if (student != null) {
-            student.setName(updated.getName());
-            student.setPhoneNumber(updated.getPhoneNumber());
-            student.setRollNumber(updated.getRollNumber());
-            student.setCourse(updated.getCourse());
-            student.setDepartment(updated.getDepartment());
-            student.setCgpa(updated.getCgpa());
-            student.setPassingYear(updated.getPassingYear());
-            studentRepository.save(student);
-            redirectAttributes.addFlashAttribute("success", "Student updated successfully!");
+        if (student == null) {
+            redirectAttributes.addFlashAttribute("error", "Student not found.");
+            return "redirect:/admin/students";
         }
+
+        String email = updated.getEmail() == null ? "" : updated.getEmail().trim();
+        if (email.isEmpty() || studentRepository.findByEmail(email)
+                .filter(existing -> !existing.getId().equals(id)).isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "Enter a valid email that is not used by another account.");
+            return "redirect:/admin/students";
+        }
+        if (newPassword != null && !newPassword.isBlank() && newPassword.length() < 8) {
+            redirectAttributes.addFlashAttribute("error", "A reset password must contain at least 8 characters.");
+            return "redirect:/admin/students";
+        }
+
+        student.setName(updated.getName());
+        student.setEmail(email);
+        student.setPhoneNumber(updated.getPhoneNumber());
+        student.setGender(updated.getGender());
+        student.setDateOfBirth(updated.getDateOfBirth());
+        student.setAddress(updated.getAddress());
+        student.setRollNumber(updated.getRollNumber());
+        student.setCollege(updated.getCollege());
+        student.setUniversity(updated.getUniversity());
+        student.setCourse(updated.getCourse());
+        student.setDepartment(updated.getDepartment());
+        student.setPassingYear(updated.getPassingYear());
+        student.setCgpa(updated.getCgpa());
+        student.setTechnicalSkills(updated.getTechnicalSkills());
+        student.setCertifications(updated.getCertifications());
+        student.setProjects(updated.getProjects());
+        student.setExperience(updated.getExperience());
+        student.setActive(updated.isActive());
+        if (newPassword != null && !newPassword.isBlank()) {
+            student.setPassword(passwordEncoder.encode(newPassword));
+        }
+        studentRepository.save(student);
+        redirectAttributes.addFlashAttribute("success", "Student details updated successfully.");
         return "redirect:/admin/students";
     }
 

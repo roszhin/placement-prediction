@@ -321,10 +321,8 @@
                                         </td>
                                         <td class="row-cgpa fw-bold" th:text="${student.cgpa}"></td>
                                         <td>
-                                            <!-- Since exact status field may vary, defaulting to isActive or fallback to Active for populated profiles -->
                                             <span th:if="${student.isActive}" class="status-badge status-active">Active</span>
-                                            <span th:unless="${student.isActive}" class="status-badge status-active">Active</span> 
-                                            <!-- Assuming all seeded students are active for now, change based on actual boolean if available -->
+                                            <span th:unless="${student.isActive}" class="status-badge status-inactive">Inactive</span>
                                         </td>
                                         <td>
                                             <div class="d-flex" style="gap: 10px;">
@@ -370,7 +368,7 @@
 
     <!-- Add Student Modal -->
     <div class="modal fade" id="addStudentModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
                 <div class="modal-header bg-light border-0 px-4 py-3">
                     <h5 class="modal-title fw-bold text-dark">Add New Student</h5>
@@ -384,23 +382,30 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-dark fw-medium">Email</label>
-                            <div class="input-group">
-                                <input type="email" class="form-control" name="email" id="addStudentEmail" required style="border-radius: 10px 0 0 10px; padding: 10px 14px;">
-                                <button class="btn border-0 text-white px-3 shadow-sm" style="background-color: #F59E0B; border-radius: 0 10px 10px 0; transition: all 0.25s ease;" type="button" id="addStudentSendOtpBtn">Send OTP</button>
-                            </div>
-                            <div id="addStudentOtpMessage" class="form-text mt-1 d-none"></div>
+                            <input type="email" class="form-control" name="email" required autocomplete="email" style="border-radius: 10px; padding: 10px 14px;">
                         </div>
-                        <div class="mb-3" id="addStudentOtpBox" style="display: none;">
-                            <label class="form-label text-dark fw-medium"><i class="fa-solid fa-key me-2"></i>Enter OTP</label>
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="addStudentOtpInput" placeholder="6-digit OTP" maxlength="6" style="border-radius: 10px 0 0 10px; padding: 10px 14px;">
-                                <button class="btn border-0 text-white px-3 shadow-sm" style="background-color: #10B981; border-radius: 0 10px 10px 0; transition: all 0.25s ease;" type="button" id="addStudentVerifyOtpBtn">Verify OTP</button>
-                            </div>
-                            <div id="addStudentVerifyMessage" class="form-text mt-1 d-none"></div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Initial Password</label>
+                            <input type="password" class="form-control" name="password" required minlength="8" autocomplete="new-password" style="border-radius: 10px; padding: 10px 14px;">
+                            <div class="form-text">The password is stored securely and can be reset from this page.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-dark fw-medium">Phone Number</label>
                             <input type="text" class="form-control" name="phoneNumber" style="border-radius: 10px; padding: 10px 14px;">
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">Gender</label>
+                                <input type="text" class="form-control" name="gender" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">Date of Birth</label>
+                                <input type="text" class="form-control" name="dateOfBirth" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Address</label>
+                            <textarea class="form-control" name="address" rows="2" style="border-radius: 10px; padding: 10px 14px;"></textarea>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
@@ -436,10 +441,40 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">College</label>
+                                <input type="text" class="form-control" name="college" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">University</label>
+                                <input type="text" class="form-control" name="university" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Passing Year</label>
+                            <input type="text" class="form-control" name="passingYear" style="border-radius: 10px; padding: 10px 14px;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Technical Skills</label>
+                            <textarea class="form-control" name="technicalSkills" rows="2" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Certifications</label>
+                            <textarea class="form-control" name="certifications" rows="2" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Projects</label>
+                            <textarea class="form-control" name="projects" rows="2" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Experience</label>
+                            <textarea class="form-control" name="experience" rows="2" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4">
                         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary-premium px-4" id="addStudentSubmitBtn" style="border-radius: 50rem;" disabled>Add Student</button>
+                        <button type="submit" class="btn btn-primary-premium px-4" style="border-radius: 50rem;">Add Student</button>
                     </div>
                 </form>
             </div>
@@ -448,7 +483,7 @@
 
     <!-- Edit Student Modals -->
     <div th:each="student : ${students}" class="modal fade" th:id="'editStudentModal' + ${student.id}" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
                 <div class="modal-header bg-light border-0 px-4 py-3">
                     <h5 class="modal-title fw-bold text-dark">Edit Student</h5>
@@ -461,12 +496,30 @@
                             <input type="text" class="form-control" name="name" th:value="${student.name}" required style="border-radius: 10px; padding: 10px 14px;">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label text-dark fw-medium">Email (Cannot be changed)</label>
-                            <input type="email" class="form-control bg-light" th:value="${student.email}" readonly style="border-radius: 10px; padding: 10px 14px; cursor: not-allowed;">
+                            <label class="form-label text-dark fw-medium">Email</label>
+                            <input type="email" class="form-control" name="email" th:value="${student.email}" required autocomplete="email" style="border-radius: 10px; padding: 10px 14px;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Reset Password <span class="text-muted">(leave blank to keep current password)</span></label>
+                            <input type="password" class="form-control" name="newPassword" minlength="8" autocomplete="new-password" style="border-radius: 10px; padding: 10px 14px;">
                         </div>
                         <div class="mb-3">
                             <label class="form-label text-dark fw-medium">Phone Number</label>
                             <input type="text" class="form-control" name="phoneNumber" th:value="${student.phoneNumber}" style="border-radius: 10px; padding: 10px 14px;">
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">Gender</label>
+                                <input type="text" class="form-control" name="gender" th:value="${student.gender}" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">Date of Birth</label>
+                                <input type="text" class="form-control" name="dateOfBirth" th:value="${student.dateOfBirth}" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Address</label>
+                            <textarea class="form-control" name="address" rows="2" th:text="${student.address}" style="border-radius: 10px; padding: 10px 14px;"></textarea>
                         </div>
                         <div class="row">
                             <div class="col-6 mb-3">
@@ -501,6 +554,40 @@
                                     <option value="Bio Technology" th:selected="${student.department == 'Bio Technology'}">Bio Technology</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">College</label>
+                                <input type="text" class="form-control" name="college" th:value="${student.college}" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-dark fw-medium">University</label>
+                                <input type="text" class="form-control" name="university" th:value="${student.university}" style="border-radius: 10px; padding: 10px 14px;">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Passing Year</label>
+                            <input type="text" class="form-control" name="passingYear" th:value="${student.passingYear}" style="border-radius: 10px; padding: 10px 14px;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Technical Skills</label>
+                            <textarea class="form-control" name="technicalSkills" rows="2" th:text="${student.technicalSkills}" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Certifications</label>
+                            <textarea class="form-control" name="certifications" rows="2" th:text="${student.certifications}" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Projects</label>
+                            <textarea class="form-control" name="projects" rows="2" th:text="${student.projects}" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-dark fw-medium">Experience</label>
+                            <textarea class="form-control" name="experience" rows="2" th:text="${student.experience}" style="border-radius: 10px; padding: 10px 14px;"></textarea>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="isActive" value="true" th:checked="${student.isActive}">
+                            <label class="form-check-label">Student account active</label>
                         </div>
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4">
@@ -621,20 +708,5 @@
         });
     </script>
     
-    <script src="/js/otp.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const adminStudentOtpManager = new OtpManager({
-                emailInputId: 'addStudentEmail',
-                sendBtnId: 'addStudentSendOtpBtn',
-                otpBoxId: 'addStudentOtpBox',
-                otpInputId: 'addStudentOtpInput',
-                verifyBtnId: 'addStudentVerifyOtpBtn',
-                msgId: 'addStudentOtpMessage',
-                verifyMsgId: 'addStudentVerifyMessage',
-                submitBtnId: 'addStudentSubmitBtn'
-            });
-        });
-    </script>
 </body>
 </html>
