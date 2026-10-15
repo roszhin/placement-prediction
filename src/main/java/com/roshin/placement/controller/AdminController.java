@@ -128,6 +128,8 @@ public class AdminController {
     public String editStudent(@PathVariable Long id,
                               @ModelAttribute Student updated,
                               @RequestParam(required = false) String newPassword,
+                              @RequestParam(name = "active", required = false) Boolean active,
+                              @RequestParam(name = "_active", required = false) String activeMarker,
                               RedirectAttributes redirectAttributes) {
         Student student = studentRepository.findById(id).orElse(null);
         if (student == null) {
@@ -163,7 +165,9 @@ public class AdminController {
         student.setCertifications(updated.getCertifications());
         student.setProjects(updated.getProjects());
         student.setExperience(updated.getExperience());
-        student.setActive(updated.isActive());
+        if (active != null || activeMarker != null) {
+            student.setActive(Boolean.TRUE.equals(active));
+        }
         if (newPassword != null && !newPassword.isBlank()) {
             student.setPassword(passwordEncoder.encode(newPassword));
         }

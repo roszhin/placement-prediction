@@ -616,7 +616,8 @@
                             <textarea class="form-control" name="experience" rows="2" th:text="${student.experience}" style="border-radius: 10px; padding: 10px 14px;"></textarea>
                         </div>
                         <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" name="isActive" value="true" th:checked="${student.isActive}">
+                            <input type="hidden" name="_active" value="on">
+                            <input class="form-check-input" type="checkbox" name="active" value="true" th:checked="${student.isActive}">
                             <label class="form-check-label">Student account active</label>
                         </div>
                     </div>
