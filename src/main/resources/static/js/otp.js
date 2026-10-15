@@ -16,6 +16,9 @@ class OtpManager {
         this.countdown = 0;
         this.timerInterval = null;
         this.originalEmail = '';
+        this.sendController = null;
+        this.verifyController = null;
+        this.modal = this.sendBtn?.closest('.modal') || this.verifyBtn?.closest('.modal');
         
         // Initial setup
         if(this.submitBtn) {
@@ -23,6 +26,9 @@ class OtpManager {
         }
 
         this.initEventListeners();
+        if (this.modal) {
+            this.modal.addEventListener('hidden.bs.modal', () => this.reset());
+        }
     }
 
     initEventListeners() {
@@ -44,6 +50,7 @@ class OtpManager {
     }
 
     resetVerification() {
+        this.clearCountdown();
         this.isVerified = false;
         if(this.otpInput) {
             this.otpInput.readOnly = false;
@@ -51,7 +58,9 @@ class OtpManager {
         }
         if(this.sendBtn) {
             this.sendBtn.disabled = false;
+            this.sendBtn.innerHTML = 'Send OTP';
         }
+        if(this.otpBox) this.otpBox.style.display = 'none';
         if(this.verifyBtn) {
             this.verifyBtn.disabled = false;
             this.verifyBtn.innerHTML = 'Verify OTP';
@@ -68,6 +77,42 @@ class OtpManager {
         if (this.submitBtn) {
             this.submitBtn.disabled = true;
         }
+    }
+
+    reset() {
+        this.sendController?.abort();
+        this.verifyController?.abort();
+        this.sendController = null;
+        this.verifyController = null;
+        this.clearCountdown();
+        this.isVerified = false;
+        this.originalEmail = '';
+        if (this.emailInput) this.emailInput.readOnly = false;
+        if (this.otpInput) {
+            this.otpInput.readOnly = false;
+            this.otpInput.value = '';
+        }
+        if (this.otpBox) this.otpBox.style.display = 'none';
+        if (this.sendBtn) {
+            this.sendBtn.disabled = false;
+            this.sendBtn.innerHTML = 'Send OTP';
+        }
+        if (this.verifyBtn) {
+            this.verifyBtn.disabled = false;
+            this.verifyBtn.innerHTML = 'Verify OTP';
+            this.verifyBtn.classList.remove('btn-success');
+            this.verifyBtn.style.removeProperty('background-color');
+            this.verifyBtn.style.removeProperty('border-color');
+            this.verifyBtn.style.removeProperty('color');
+        }
+        [this.msgBox, this.verifyMsgBox].forEach(message => {
+            if (!message) return;
+            message.classList.add('d-none');
+            message.textContent = '';
+            message.classList.remove('text-info', 'text-success', 'text-danger', 'text-warning');
+            message.style.removeProperty('color');
+        });
+        if (this.submitBtn) this.submitBtn.disabled = true;
     }
 
     sendOtp() {
@@ -87,28 +132,39 @@ class OtpManager {
         this.sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
         this.showMessage(this.msgBox, "Sending OTP...", "info");
 
-        // Call Backend API
+        const controller = new AbortController();
+        this.sendController?.abort();
+        this.sendController = controller;
+
         fetch(`/api/send-otp?email=${encodeURIComponent(email)}`, {
-            method: 'POST'
+            method: 'POST',
+            signal: controller.signal
         })
         .then(async response => {
             const data = await response.json().catch(() => ({}));
+            if (this.sendController !== controller) return;
             if (response.ok) {
                 this.showMessage(this.msgBox, "OTP sent successfully.", "success");
                 if(this.otpBox) this.otpBox.style.display = 'flex';
                 this.originalEmail = email;
                 this.startCountdown();
             } else {
-                // E.g. "Email already exists"
-                this.showMessage(this.msgBox, data.message || "Failed to send OTP. Email may already be registered.", "danger");
+                const message = data.message === "Email already exists"
+                    ? "An account with this email already exists. Please sign in or use another email."
+                    : "OTP sending failed. Please try again later.";
+                this.showMessage(this.msgBox, message, "danger");
                 this.sendBtn.disabled = false;
                 this.sendBtn.innerHTML = 'Send OTP';
             }
         })
         .catch(error => {
-            this.showMessage(this.msgBox, "An error occurred while sending OTP.", "danger");
+            if (error.name === 'AbortError' || this.sendController !== controller) return;
+            this.showMessage(this.msgBox, "OTP sending failed. Please try again later.", "danger");
             this.sendBtn.disabled = false;
             this.sendBtn.innerHTML = 'Send OTP';
+        })
+        .finally(() => {
+            if (this.sendController === controller) this.sendController = null;
         });
     }
 
@@ -124,11 +180,17 @@ class OtpManager {
         this.verifyBtn.disabled = true;
         this.verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
 
+        const controller = new AbortController();
+        this.verifyController?.abort();
+        this.verifyController = controller;
+
         fetch(`/api/verify-otp?email=${encodeURIComponent(email)}&otp=${encodeURIComponent(otp)}`, {
-            method: 'POST'
+            method: 'POST',
+            signal: controller.signal
         })
         .then(async response => {
             const data = await response.json().catch(() => ({}));
+            if (this.verifyController !== controller) return;
             if (response.ok) {
                 this.isVerified = true;
                 this.showMessage(this.verifyMsgBox, "<i class='fa-solid fa-circle-check me-1'></i> Email verified successfully.", "success");
@@ -153,13 +215,18 @@ class OtpManager {
             }
         })
         .catch(error => {
+            if (error.name === 'AbortError' || this.verifyController !== controller) return;
             this.showMessage(this.verifyMsgBox, "An error occurred while verifying OTP.", "danger");
             this.verifyBtn.disabled = false;
             this.verifyBtn.innerHTML = 'Verify OTP';
+        })
+        .finally(() => {
+            if (this.verifyController === controller) this.verifyController = null;
         });
     }
 
     startCountdown() {
+        this.clearCountdown();
         this.countdown = 60;
         this.sendBtn.disabled = true;
         
@@ -168,11 +235,17 @@ class OtpManager {
             this.countdown--;
             
             if (this.countdown < 0) {
-                clearInterval(this.timerInterval);
+                this.clearCountdown();
                 this.sendBtn.innerHTML = 'Resend OTP';
                 this.sendBtn.disabled = false;
             }
         }, 1000);
+    }
+
+    clearCountdown() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerInterval = null;
+        this.countdown = 0;
     }
 
     showMessage(element, html, type) {

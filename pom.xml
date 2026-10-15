@@ -71,12 +71,6 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Java Mail Sender -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-
         <!-- Apache PDFBox for Resume Parsing -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

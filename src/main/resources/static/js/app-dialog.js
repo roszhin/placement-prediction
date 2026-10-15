@@ -15,6 +15,130 @@
 (function () {
     'use strict';
 
+    const saveNavigationKey = 'appSaveNavigationPending';
+
+    function isAuthenticationUrl(url) {
+        try {
+            const path = new URL(url, window.location.href).pathname.toLowerCase();
+            return path.includes('login') || path.includes('logout') || path.includes('register');
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function showSaveBubble(persistForNavigation = true) {
+        if (persistForNavigation) {
+            try {
+                sessionStorage.setItem(saveNavigationKey, 'true');
+            } catch (error) {}
+        }
+
+        let bubble = document.getElementById('app-save-bubble');
+        if (!bubble) {
+            bubble = document.createElement('div');
+            bubble.id = 'app-save-bubble';
+            bubble.className = 'app-save-bubble';
+            bubble.setAttribute('role', 'status');
+            bubble.setAttribute('aria-live', 'polite');
+            bubble.innerHTML = '<span class="app-save-bubble__spinner" aria-hidden="true"></span><span>Saving changes…</span>';
+            document.body.appendChild(bubble);
+        }
+        requestAnimationFrame(() => bubble.classList.add('is-visible'));
+    }
+
+    function hideSaveBubble() {
+        const bubble = document.getElementById('app-save-bubble');
+        if (!bubble) return;
+        bubble.classList.remove('is-visible');
+        window.setTimeout(() => bubble.remove(), 180);
+    }
+
+    function restoreSaveBubbleForIncomingPage() {
+        let isPending = false;
+        try {
+            isPending = sessionStorage.getItem(saveNavigationKey) === 'true';
+            if (isPending) sessionStorage.removeItem(saveNavigationKey);
+        } catch (error) {}
+
+        if (!isPending) return;
+        showSaveBubble(false);
+        window.addEventListener('load', () => window.setTimeout(hideSaveBubble, 250), { once: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', restoreSaveBubbleForIncomingPage, { once: true });
+    } else {
+        restoreSaveBubbleForIncomingPage();
+    }
+
+    document.addEventListener('submit', function (event) {
+        const form = event.target;
+        if (event.defaultPrevented || !(form instanceof HTMLFormElement) || form.method.toUpperCase() !== 'POST') return;
+        if (isAuthenticationUrl(form.action || window.location.href)) return;
+        showSaveBubble();
+    });
+
+    document.addEventListener('hidden.bs.modal', function (event) {
+        const modal = event.target;
+        if (!(modal instanceof HTMLElement)) return;
+
+        modal.querySelectorAll('form').forEach(form => {
+            form.reset();
+            form.classList.remove('was-validated');
+            form.querySelectorAll('.is-invalid, .is-valid').forEach(field => {
+                field.classList.remove('is-invalid', 'is-valid');
+            });
+            form.querySelectorAll('[aria-invalid]').forEach(field => field.removeAttribute('aria-invalid'));
+        });
+    });
+
+    if (!window.appNavigationPrefetchInstalled) {
+        window.appNavigationPrefetchInstalled = true;
+        const prefetchedNavigationUrls = new Set();
+        let navigationPrefetchTimer = null;
+
+        function prefetchNavigationLink(target) {
+            const anchor = target && target.closest('a[href]');
+            if (!anchor || !anchor.closest('.sidebar-menu, .topbar')) return;
+            if (anchor.hasAttribute('data-confirm') || anchor.hasAttribute('download') || anchor.target === '_blank') return;
+            if (navigator.connection && (navigator.connection.saveData || /(^|-)2g$/.test(navigator.connection.effectiveType || ''))) return;
+
+            let url;
+            try {
+                url = new URL(anchor.href, window.location.href);
+            } catch (error) {
+                return;
+            }
+
+            if (url.origin !== window.location.origin || !['http:', 'https:'].includes(url.protocol)) return;
+            if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+            if (isAuthenticationUrl(url.href) || /\/(delete|remove|toggle|apply|withdraw)(\/|$)/i.test(url.pathname)) return;
+            if (prefetchedNavigationUrls.has(url.href) || prefetchedNavigationUrls.size >= 6) return;
+            if (Array.from(document.querySelectorAll('link[data-app-navigation-prefetch]')).some(link => link.href === url.href)) return;
+
+            const prefetchLink = document.createElement('link');
+            prefetchLink.rel = 'prefetch';
+            prefetchLink.href = url.href;
+            prefetchLink.dataset.appNavigationPrefetch = 'true';
+            document.head.appendChild(prefetchLink);
+            prefetchedNavigationUrls.add(url.href);
+        }
+
+        document.addEventListener('pointerover', function (event) {
+            if (event.pointerType !== 'mouse') return;
+            const anchor = event.target.closest && event.target.closest('.sidebar-menu a[href], .topbar a[href]');
+            if (!anchor) return;
+            window.clearTimeout(navigationPrefetchTimer);
+            navigationPrefetchTimer = window.setTimeout(() => prefetchNavigationLink(anchor), 140);
+        });
+
+        document.addEventListener('focusin', function (event) {
+            if (event.target.closest && event.target.closest('.sidebar-menu a[href], .topbar a[href]')) {
+                prefetchNavigationLink(event.target);
+            }
+        });
+    }
+
     // ------------------------------------------------------------------------
     // 1. DOM CONTAINER INITIALIZATION
     // ------------------------------------------------------------------------
@@ -596,6 +720,9 @@
 
             if (confirmed) {
                 form.dataset.confirmed = 'true';
+                if (form.method.toUpperCase() === 'POST' && !isAuthenticationUrl(form.action || window.location.href)) {
+                    showSaveBubble();
+                }
                 form.submit();
             }
         }
@@ -631,9 +758,13 @@
         if (confirmed) {
             target.dataset.confirmed = 'true';
             if (target.tagName === 'A' && target.href) {
+                if (!isAuthenticationUrl(target.href)) showSaveBubble();
                 window.location.href = target.href;
             } else if (target.type === 'submit' && target.form) {
                 target.form.dataset.confirmed = 'true';
+                if (target.form.method.toUpperCase() === 'POST' && !isAuthenticationUrl(target.form.action || window.location.href)) {
+                    showSaveBubble();
+                }
                 target.form.submit();
             } else {
                 target.click();

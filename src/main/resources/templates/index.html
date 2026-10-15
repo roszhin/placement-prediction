@@ -168,13 +168,31 @@
         /* RESPONSIVE                             */
         /* -------------------------------------- */
         @media (max-width: 1024px) {
-            #master-scroll-track { display: none; }
-            #viewport { height: auto; overflow: visible; padding: 50px 0; background: var(--bg-color); }
-            #hero-grid { position: relative; flex-direction: column; align-items: center; justify-content: flex-start; height: auto; transform: none; left: 0; }
+            #master-scroll-track { height: auto; min-height: 0; }
+            #viewport { width: 100%; height: auto; min-height: 0; overflow: visible; padding: 36px 0; background: var(--bg-color); }
+            #hero-grid { position: relative; width: 100%; flex-direction: column; align-items: center; justify-content: flex-start; height: auto; transform: none; left: 0; padding: 0 24px; gap: 28px; }
             #hero-left { width: 100%; align-items: flex-start; margin-bottom: 50px; }
-            #hero-right { width: 100%; display: flex; flex-direction: column; gap: 20px; height: auto; align-items: center; position: relative; }
-            .u-card, #fake-ai { position: relative; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; transform: none !important; width: 100%; max-width: 400px; margin: 0; }
+            #hero-right { width: 100%; display: flex; flex-direction: column; gap: 16px; height: auto; align-items: center; position: relative; }
+            #hero-right .u-card, #fake-ai { position: relative; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; transform: none !important; width: 100%; max-width: 400px; margin: 0; }
+            #fake-ai { width: 120px; height: 120px; flex: 0 0 120px; }
             #webgl-container, .bg-text, .stage-title { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            :root { --header-height: 64px; }
+            .nav-wrapper { padding: 0 16px; }
+            .nav-brand { gap: 8px; font-size: 1.15rem; }
+            .nav-links { gap: 8px; }
+            .btn-nav { padding: 9px 13px; font-size: 0.85rem; }
+            #hero-grid { padding: 0 18px; gap: 20px; }
+            #hero-left { margin-bottom: 12px; }
+            h1 { font-size: clamp(2.2rem, 10vw, 3rem); }
+            .hero-sub { font-size: 1rem; margin-bottom: 24px; }
+            .hero-badge { font-size: 0.7rem; letter-spacing: 0.7px; }
+            #hero-left > div:last-child { display: flex; flex-wrap: wrap; gap: 10px; }
+            #hero-left > div:last-child a { margin-right: 0 !important; text-align: center; }
+            #act-resume { padding: 22px; }
+            .res-skills { gap: 6px; }
         }
     </style>
 </head>

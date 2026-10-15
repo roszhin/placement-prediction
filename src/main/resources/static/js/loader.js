@@ -1,4 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const transitionStorageKey = "premiumLoaderPendingNavigation";
+    let isIncomingTransition = false;
+    try {
+        isIncomingTransition = sessionStorage.getItem(transitionStorageKey) === "true";
+        if (isIncomingTransition) sessionStorage.removeItem(transitionStorageKey);
+    } catch (error) {
+        console.warn("Could not restore the page transition loader", error);
+    }
+
     // Ensure Global Dialog & Toast system is loaded
     if (!window.AppDialog && !document.querySelector('script[src*="app-dialog.js"]')) {
         const s = document.createElement('script');
@@ -105,6 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.showPremiumLoader = function(customTexts) {
         startLoaderSystem(customTexts);
     };
+
+    if (isIncomingTransition) {
+        window.showPremiumLoader(["Loading your page...", "Preparing your account...", "Almost ready..."]);
+        window.addEventListener("load", () => window.completePremiumLoader(), { once: true });
+    }
     
     // Graceful 100% completion
     window.completePremiumLoader = function(callback) {
@@ -132,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 400);
     };
 
-    // Intercept Form Submissions for Login, Register, Logout
+    // Keep the loader visible during native auth form navigation.
     document.addEventListener("submit", function(e) {
         const form = e.target;
         
@@ -147,10 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Check if it's an auth-related form
         const isAuthAction = actionStr.includes('login') || actionStr.includes('register') || actionStr.includes('logout');
 
-        if (isAuthAction && !form.dataset.ajaxSubmitted) {
-            e.preventDefault(); // Stop standard synchronous submission
-            
-            // 1. Show loader immediately with custom contextual texts
+        if (isAuthAction) {
             let loaderTexts = null;
             if (actionStr.includes('login')) {
                 loaderTexts = ["Authenticating User...", "Verifying Credentials...", "Preparing Dashboard..."];
@@ -160,56 +171,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 loaderTexts = ["Creating Account...", "Securing Profile...", "Setting up Workspace..."];
             }
             window.showPremiumLoader(loaderTexts);
-            
-            // 2. Perform the actual process via AJAX to control the loader
-            const submitUrl = form.action || window.location.href;
-            const submitMethod = form.getAttribute('method') || 'POST';
-            
-            const formData = new FormData(form);
-            const searchParams = new URLSearchParams();
-            for (const pair of formData) {
-                searchParams.append(pair[0], pair[1]);
+            try {
+                sessionStorage.setItem(transitionStorageKey, "true");
+            } catch (error) {
+                console.warn("Could not persist the page transition loader", error);
             }
-            
-            const fetchPromise = fetch(submitUrl, {
-                method: submitMethod,
-                body: searchParams,
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            });
-            const delayPromise = new Promise(resolve => setTimeout(resolve, 2500)); // Enforce minimum 2.5s loader view
-            
-            Promise.all([fetchPromise, delayPromise])
-            .then(async ([response]) => {
-                const url = response.url;
-                const isRedirect = response.redirected || (url && !url.toLowerCase().includes(actionStr) && !url.toLowerCase().includes("error"));
-                
-                let html = null;
-                if (!isRedirect) {
-                    html = await response.text(); // Get validation errors HTML
-                }
-
-                // 3. Progress reaches 100% -> Fade out loader -> Redirect/Render
-                window.completePremiumLoader(() => {
-                    if (isRedirect) {
-                        window.location.href = url;
-                    } else if (html) {
-                        document.open();
-                        document.write(html);
-                        document.close();
-                    } else {
-                        window.location.reload();
-                    }
-                });
-            })
-            .catch(error => {
-                console.error("Form submission failed", error);
-                window.hidePremiumLoader();
-                // Fallback to standard submission
-                form.dataset.ajaxSubmitted = "true";
-                form.submit();
-            });
         }
     });
 });

@@ -45,14 +45,21 @@ public class DemoDataSeeder implements CommandLineRunner {
         Role companyRole = roleRepository.findByName("ROLE_COMPANY").orElseGet(() -> roleRepository.save(new Role("ROLE_COMPANY")));
         Role studentRole = roleRepository.findByName("ROLE_STUDENT").orElseGet(() -> roleRepository.save(new Role("ROLE_STUDENT")));
 
+        String defaultPassword = passwordEncoder.encode("password123");
+        ensureDemoStudent("Arjun Patel", "arjun@gmail.com", "MCA", "2024", 8.2, "Computer Science", "Java, Python, Spring Boot, React", defaultPassword, studentRole);
+        ensureDemoStudent("Riya Sharma", "riya@gmail.com", "BCA", "2024", 7.5, "Information Technology", "HTML, CSS, JavaScript, Node.js", defaultPassword, studentRole);
+        ensureDemoStudent("Vikram Singh", "vikram@gmail.com", "B.Tech", "2024", 6.8, "Computer Science", "Python, Machine Learning, SQL", defaultPassword, studentRole);
+        ensureDemoStudent("Ananya Desai", "ananya@gmail.com", "MCA", "2024", 9.1, "Data Science", "Python, TensorFlow, Pandas, SQL", defaultPassword, studentRole);
+        ensureDemoStudent("Rohit Verma", "rohit@gmail.com", "B.Tech", "2024", 7.2, "Information Technology", "Java, C++, MySQL", defaultPassword, studentRole);
+        ensureDemoStudent("Sneha Gupta", "sneha@gmail.com", "MCA", "2024", 8.5, "Computer Applications", "React, Tailwind, HTML, JS", defaultPassword, studentRole);
+
         if (jobRepository.count() > 0) {
-            System.out.println("Database already contains jobs. Skipping seeding.");
+            System.out.println("Demo students ensured. Database already contains jobs, skipping sample job seeding.");
             return;
         }
 
         System.out.println("Seeding 50 Unique Jobs...");
 
-        String defaultPassword = passwordEncoder.encode("password123");
         String companyPassword = passwordEncoder.encode("company123");
 
         // 1. Create Companies (HR Users)
@@ -72,16 +79,6 @@ public class DemoDataSeeder implements CommandLineRunner {
                 c = createCompany(cName, cName + " HR", email, "HR Manager", "Technology", "Global", "https://www." + cName.toLowerCase().replace(" ", "") + ".com", companyPassword, companyRole);
             }
             companies.add(c);
-        }
-
-        // 2. Create Sample Students
-        if (studentRepository.count() == 0) {
-            createStudent("Arjun Patel", "arjun@gmail.com", "MCA", "2024", 8.2, "Computer Science", "Java, Python, Spring Boot, React", defaultPassword, studentRole);
-            createStudent("Riya Sharma", "riya@gmail.com", "BCA", "2024", 7.5, "Information Technology", "HTML, CSS, JavaScript, Node.js", defaultPassword, studentRole);
-            createStudent("Vikram Singh", "vikram@gmail.com", "B.Tech", "2024", 6.8, "Computer Science", "Python, Machine Learning, SQL", defaultPassword, studentRole);
-            createStudent("Ananya Desai", "ananya@gmail.com", "MCA", "2024", 9.1, "Data Science", "Python, TensorFlow, Pandas, SQL", defaultPassword, studentRole);
-            createStudent("Rohit Verma", "rohit@gmail.com", "B.Tech", "2024", 7.2, "Information Technology", "Java, C++, MySQL", defaultPassword, studentRole);
-            createStudent("Sneha Gupta", "sneha@gmail.com", "MCA", "2024", 8.5, "Computer Applications", "React, Tailwind, HTML, JS", defaultPassword, studentRole);
         }
 
         // 3. Create Specific Google HR user and 5 jobs
@@ -240,5 +237,14 @@ public class DemoDataSeeder implements CommandLineRunner {
         student.setActive(true);
         student.setPhoneNumber("9876543210");
         return studentRepository.save(student);
+    }
+
+    private void ensureDemoStudent(String name, String email, String course, String passingYear, Double cgpa, String department, String skills, String password, Role role) {
+        Student student = studentRepository.findByEmail(email)
+                .orElseGet(() -> createStudent(name, email, course, passingYear, cgpa, department, skills, password, role));
+        student.setPassword(password);
+        student.setRole(role);
+        student.setActive(true);
+        studentRepository.save(student);
     }
 }
